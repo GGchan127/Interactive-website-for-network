@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICMP — Internet Control Message Protocol</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:#0f1117; --paper:#f5f2eb; --cream:#ede9df; --rust:#c94a2a;
+    --blue:#1a3a6b; --blue-light:#e8eef8; --gold:#d4a039; --green:#2a6b3a; --green-light:#e8f5eb;
+    --muted:#6b6560; --border:#d0cab8; --orange:#d46a20;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;line-height:1.7;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;opacity:0.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;}
+
+  nav{position:sticky;top:0;z-index:100;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:space-between;padding:0 3rem;height:56px;border-bottom:3px solid var(--rust);}
+  .nav-brand{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;}
+  .nav-brand span{color:var(--rust);}
+  .nav-links{display:flex;gap:1.6rem;list-style:none;}
+  .nav-links a{color:#aaa;text-decoration:none;font-size:0.78rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;transition:color 0.2s;}
+  .nav-links a:hover{color:var(--rust);}
+
+  .hero{background:var(--ink);color:var(--paper);padding:5rem 3rem 4rem;position:relative;overflow:hidden;}
+  .hero::after{content:'ICMP';position:absolute;right:40px;top:50%;transform:translateY(-50%);font-family:'Bebas Neue',sans-serif;font-size:13rem;color:rgba(255,255,255,0.03);letter-spacing:6px;pointer-events:none;}
+  .hero-kicker{font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--rust);letter-spacing:3px;text-transform:uppercase;margin-bottom:1rem;opacity:0;animation:slideIn 0.6s ease forwards 0.2s;}
+  .hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,8vw,6rem);line-height:0.95;letter-spacing:2px;max-width:760px;opacity:0;animation:slideIn 0.7s ease forwards 0.4s;}
+  .hero h1 em{font-style:normal;color:var(--rust);}
+  .hero-sub{font-size:1.05rem;color:rgba(255,255,255,0.55);max-width:600px;margin-top:1.5rem;opacity:0;animation:slideIn 0.7s ease forwards 0.6s;}
+  .hero-stats{display:flex;gap:2.5rem;margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.1);opacity:0;animation:slideIn 0.7s ease forwards 0.8s;flex-wrap:wrap;}
+  .hero-stat-val{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--rust);letter-spacing:1px;line-height:1;}
+  .hero-stat-label{font-family:'DM Mono',monospace;font-size:0.68rem;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;margin-top:0.2rem;}
+  @keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+  .section{padding:5rem 3rem;}
+  .section-inner{max-width:1100px;margin:0 auto;}
+  .section-header{display:flex;align-items:flex-start;gap:1.5rem;margin-bottom:3rem;}
+  .section-num{font-family:'Bebas Neue',sans-serif;font-size:5rem;color:rgba(0,0,0,0.06);line-height:1;flex-shrink:0;}
+  .section-tag{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--rust);letter-spacing:3px;text-transform:uppercase;margin-bottom:0.4rem;}
+  .section-title{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:1px;}
+  .lead{color:var(--muted);font-size:0.96rem;max-width:740px;margin-bottom:2rem;}
+
+  /* GIF CONTAINERS */
+  .gif-container{background:var(--paper);border:2px solid var(--border);border-radius:6px;overflow:hidden;margin:1.5rem 0;}
+  .gif-title{background:var(--ink);color:var(--gold);padding:0.5rem 1rem;font-family:'Bebas Neue',sans-serif;font-size:0.88rem;letter-spacing:2px;display:flex;align-items:center;gap:0.5rem;}
+  .gif-title::before{content:'▶';color:var(--rust);font-size:0.7rem;}
+  .gif-stage{padding:1.5rem;}
+
+  /* CONCEPT CARDS */
+  .concept-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.2rem;margin:1.5rem 0;}
+  .concept-card{border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+  .concept-card-head{padding:0.7rem 1rem;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:#fff;}
+  .concept-card-body{padding:1rem;font-size:0.88rem;color:var(--muted);}
+  .concept-card-body strong{color:var(--ink);}
+
+  /* INFO BOXES */
+  .info-two{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0;}
+  .info-box{border:1px solid var(--border);border-radius:4px;padding:1.4rem;}
+  .info-box h4{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;margin-bottom:0.7rem;}
+  .info-box p, .info-box li{font-size:0.88rem;color:var(--muted);margin-bottom:0.4rem;}
+  .info-box ul{padding-left:1.2rem;}
+  .info-box strong{color:var(--ink);}
+
+  /* PING DEMO SECTION */
+  .ping-section{background:var(--ink);}
+  .ping-section .section-title{color:var(--paper);}
+  .ping-section .section-tag{color:var(--gold);}
+  .ping-section .section-num{color:rgba(255,255,255,0.04);}
+  .ping-section .lead{color:rgba(255,255,255,0.5);}
+
+  /* TERMINAL */
+  .terminal{background:#1a1a1a;border:1px solid #333;border-radius:4px;overflow:hidden;font-family:'DM Mono',monospace;font-size:0.83rem;margin:1.2rem 0;}
+  .terminal-bar{background:#2d2d2d;padding:0.5rem 1rem;display:flex;align-items:center;gap:0.5rem;border-bottom:1px solid #333;}
+  .term-btn{width:12px;height:12px;border-radius:50%;}
+  .term-close{background:#ff5f56;}
+  .term-min{background:#ffbd2e;}
+  .term-max{background:#27c93f;}
+  .term-title{font-size:0.72rem;color:#888;margin-left:0.5rem;letter-spacing:1px;}
+  .terminal-body{padding:1rem 1.2rem;line-height:1.8;}
+  .term-cmd{color:#27c93f;}
+  .term-out{color:#ccc;}
+  .term-highlight{color:#7eb3ff;}
+  .term-reply{color:#aaffaa;}
+  .term-stat{color:#ffbd2e;}
+  .term-cursor{display:inline-block;width:8px;height:14px;background:#27c93f;animation:blink 1s step-end infinite;vertical-align:text-bottom;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+  /* PING FIELDS */
+  .field-row{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:flex-end;}
+  .field-group{display:flex;flex-direction:column;gap:0.4rem;}
+  .field-label{font-family:'DM Mono',monospace;font-size:0.68rem;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;}
+  .field-input{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:3px;color:#fff;padding:0.55rem 0.9rem;font-family:'DM Mono',monospace;font-size:0.9rem;outline:none;transition:border-color 0.2s;width:180px;}
+  .field-input:focus{border-color:var(--rust);}
+  .field-input-sm{width:80px;}
+  .run-btn{background:var(--rust);color:#fff;border:none;padding:0.6rem 1.6rem;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;border-radius:3px;cursor:pointer;transition:opacity 0.2s;white-space:nowrap;}
+  .run-btn:hover{opacity:0.85;}
+  .run-btn.secondary{background:rgba(255,255,255,0.12);}
+
+  /* PACKET ANATOMY */
+  .packet-row{display:flex;gap:0;border:1px solid var(--border);border-radius:4px;overflow:hidden;font-family:'DM Mono',monospace;font-size:0.78rem;margin:1.2rem 0;}
+  .pkt-field{padding:0.7rem 0.9rem;text-align:center;border-right:1px solid var(--border);}
+  .pkt-field:last-child{border-right:none;}
+  .pkt-field-name{font-family:'Bebas Neue',sans-serif;font-size:0.72rem;letter-spacing:1px;margin-bottom:0.25rem;}
+  .pkt-field-bits{font-size:0.68rem;color:var(--muted);}
+  .pkt-f1{background:rgba(26,58,107,0.12);flex:1;}
+  .pkt-f2{background:rgba(201,74,42,0.1);flex:1;}
+  .pkt-f3{background:rgba(42,107,58,0.12);flex:1;}
+  .pkt-f4{background:rgba(212,160,57,0.12);flex:2;}
+  .pkt-f5{background:rgba(201,74,42,0.06);flex:4;}
+
+  /* TRACEROUTE SECTION */
+  .trace-section{background:var(--cream);}
+
+  /* HOP TABLE */
+  .hop-table{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:0.82rem;margin:1.2rem 0;}
+  .hop-table th{background:var(--ink);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:2px;padding:0.7rem 1rem;text-align:left;}
+  .hop-table td{padding:0.65rem 1rem;border-bottom:1px solid var(--border);}
+  .hop-table tr:hover td{background:rgba(0,0,0,0.04);}
+  .hop-num{color:var(--rust);font-weight:600;}
+  .hop-time{color:var(--blue);}
+  .hop-host{color:var(--green);}
+  .hop-ip{color:var(--muted);}
+
+  /* TYPE TABLE */
+  .type-table{width:100%;border-collapse:collapse;margin:1.2rem 0;}
+  .type-table th{background:var(--ink);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:2px;padding:0.7rem 1rem;text-align:left;}
+  .type-table td{padding:0.7rem 1rem;border-bottom:1px solid var(--border);font-size:0.87rem;}
+  .type-table tr:nth-child(even) td{background:rgba(0,0,0,0.03);}
+  .type-num{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--rust);}
+  .type-name{font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--blue);font-weight:500;}
+  .type-use{color:var(--muted);font-size:0.84rem;}
+
+  /* NOTE BOX */
+  .note-box{font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--muted);padding:0.8rem 1rem;background:var(--paper);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:2px;margin:1rem 0;}
+  .note-box strong{color:var(--rust);}
+
+  /* QUIZ */
+  .quiz-section{background:var(--paper);}
+  #quizProgress{height:4px;background:var(--border);border-radius:2px;margin-bottom:2rem;}
+  #quizBar{height:100%;background:var(--rust);border-radius:2px;transition:width 0.4s ease;}
+  .q-text{font-size:1.05rem;font-weight:500;margin-bottom:1.2rem;color:var(--ink);}
+  .q-opts{display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1.2rem;}
+  .q-opt{background:var(--cream);border:2px solid var(--border);border-radius:4px;padding:0.75rem 1.1rem;cursor:pointer;font-size:0.9rem;transition:border-color 0.15s,background 0.15s;text-align:left;}
+  .q-opt:hover{border-color:var(--rust);background:rgba(201,74,42,0.06);}
+  .q-opt.correct{border-color:var(--green);background:var(--green-light);color:var(--green);}
+  .q-opt.wrong{border-color:var(--rust);background:rgba(201,74,42,0.08);color:var(--rust);}
+  .q-feedback{font-size:0.85rem;padding:0.8rem 1rem;border-radius:3px;margin-bottom:1rem;display:none;}
+  .q-feedback.show{display:block;}
+  .q-feedback.ok{background:var(--green-light);color:var(--green);border:1px solid rgba(42,107,58,0.2);}
+  .q-feedback.bad{background:rgba(201,74,42,0.08);color:var(--rust);border:1px solid rgba(201,74,42,0.2);}
+  .q-next{background:var(--ink);color:#fff;border:none;padding:0.6rem 1.6rem;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;border-radius:3px;cursor:pointer;display:none;}
+  .q-next.show{display:inline-block;}
+  #quizScore{font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--rust);letter-spacing:2px;}
+  #quizMsg{color:var(--muted);font-size:0.9rem;margin-top:0.5rem;}
+  .restart-btn{background:var(--rust);color:#fff;border:none;padding:0.6rem 1.6rem;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;border-radius:3px;cursor:pointer;margin-top:1rem;}
+
+  /* PING DEMO ANIMATION */
+  .ping-anim-wrap{position:relative;height:120px;margin:1.5rem 0;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;}
+  .pa-label{position:absolute;font-family:'DM Mono',monospace;font-size:0.7rem;color:rgba(255,255,255,0.5);top:10px;}
+  .pa-src{left:20px;}
+  .pa-dst{right:20px;}
+  .pa-node{position:absolute;top:30px;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+  .pa-src-node{left:14px;background:rgba(26,58,107,0.4);border:2px solid var(--blue);}
+  .pa-dst-node{right:14px;background:rgba(42,107,58,0.4);border:2px solid var(--green);}
+  .pa-packet{position:absolute;top:38px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;font-family:'DM Mono',monospace;transition:left 0.5s cubic-bezier(.4,0,.2,1),opacity 0.3s;opacity:0;}
+  .pa-req{background:var(--rust);color:#fff;left:60px;}
+  .pa-rep{background:var(--green);color:#fff;right:60px;}
+  .pa-line{position:absolute;top:49px;left:60px;right:60px;height:1px;background:rgba(255,255,255,0.08);}
+  .pa-status{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:0.72rem;color:rgba(255,255,255,0.4);white-space:nowrap;}
+
+  /* TTL VISUAL */
+  .ttl-viz{display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;margin:1rem 0;}
+  .ttl-hop{display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .ttl-val{font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:700;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid;}
+  .ttl-arrow{font-size:0.8rem;color:var(--muted);margin:0 2px;}
+  .ttl-label{font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--muted);text-align:center;}
+
+  /* TRACEROUTE ANIMATOR */
+  .tracert-anim{background:#0f1117;border-radius:4px;padding:1.5rem 2rem;margin:1.2rem 0;position:relative;overflow:hidden;}
+  .ta-title{font-family:'Bebas Neue',sans-serif;font-size:0.8rem;letter-spacing:2px;color:var(--gold);margin-bottom:1rem;}
+  .ta-path{display:flex;align-items:center;gap:0.5rem;margin-bottom:1.2rem;flex-wrap:wrap;}
+  .ta-node{width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:0.65rem;font-weight:700;color:rgba(255,255,255,0.4);transition:all 0.3s;}
+  .ta-node.active{border-color:var(--rust);background:rgba(201,74,42,0.2);color:#fff;}
+  .ta-node.done{border-color:var(--green);background:rgba(42,107,58,0.2);color:#6fd46f;}
+  .ta-arrow{color:rgba(255,255,255,0.2);font-size:0.9rem;font-family:'DM Mono',monospace;}
+  .ta-hops{font-family:'DM Mono',monospace;font-size:0.78rem;color:#ccc;line-height:2;}
+  .ta-hop-line{display:flex;gap:0.8rem;opacity:0;transition:opacity 0.3s;}
+  .ta-hop-line.show{opacity:1;}
+  .ta-hop-num{color:var(--rust);width:20px;}
+  .ta-hop-times{color:#7eb3ff;width:90px;}
+  .ta-hop-host{color:#6fd46f;}
+  .ta-hop-ip{color:rgba(255,255,255,0.4);font-size:0.72rem;}
+
+  footer{background:var(--ink);color:rgba(255,255,255,0.35);padding:2rem 3rem;font-family:'DM Mono',monospace;font-size:0.72rem;text-align:center;letter-spacing:1px;}
+  footer strong{color:var(--rust);}
+
+  @media(max-width:700px){
+    nav{padding:0 1.5rem;}.hero{padding:3rem 1.5rem 2.5rem;}.section{padding:3rem 1.5rem;}
+    .info-two,.concept-grid{grid-template-columns:1fr;}
+    .nav-links{display:none;}
+  }
+</style>
+</head>
+<body>
+<div id="course-navbar">
+  <style>
+    #course-navbar{position:sticky;top:0;z-index:9999;background:#0f1117;border-bottom:3px solid #c94a2a;display:flex;align-items:center;gap:0;height:52px;font-family:'DM Sans',sans-serif;}
+    #course-navbar a{text-decoration:none;}
+    .cnav-home{padding:0 1.2rem;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1.5px;color:#d4a039;white-space:nowrap;height:52px;display:flex;align-items:center;border-right:1px solid rgba(255,255,255,.1);}
+    .cnav-home:hover{background:rgba(212,160,57,.1);}
+    .cnav-module{padding:0 1rem;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:1px;color:rgba(255,255,255,.45);white-space:nowrap;flex:1;}
+    .cnav-module strong{color:#fff;font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:1px;}
+    .cnav-progress{height:3px;background:#c94a2a;width:47%;position:absolute;bottom:0;left:0;}
+    .cnav-arrow{padding:0 1rem;font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:1px;color:rgba(255,255,255,.5);height:52px;display:flex;align-items:center;border-left:1px solid rgba(255,255,255,.1);white-space:nowrap;}
+    .cnav-arrow:hover{color:#fff;background:rgba(255,255,255,.05);}
+    .cnav-next{background:#c94a2a;color:#fff !important;}
+    .cnav-next:hover{background:#a83a1e !important;}
+  </style>
+  <a class="cnav-home" href="index.html">⌂ HOME</a>
+  <div class="cnav-module">MODULE 07 / 15 &nbsp; <strong>ICMP PROTOCOL</strong></div>
+  <a class="cnav-arrow" href="module6_ip-calculation-interactive.html">← 6</a>
+  <a class="cnav-arrow cnav-next" href="module8_arp-interactive_1.html">8 →</a>
+  <div class="cnav-progress"></div>
+</div>
+
+<nav>
+  <div class="nav-brand">NET<span>FUND</span></div>
+  <ul class="nav-links">
+    <li><a href="#what">What is ICMP</a></li>
+    <li><a href="#ping">Ping</a></li>
+    <li><a href="#traceroute">Traceroute</a></li>
+    <li><a href="#types">Message Types</a></li>
+    <li><a href="#quiz">Quiz</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-kicker">// Layer 3 Protocol · Network Fundamentals EP.6</div>
+  <h1>INTERNET<br>CONTROL<br><em>MESSAGE</em><br>PROTOCOL</h1>
+  <p class="hero-sub">ICMP operates at Layer 3 alongside IP — it sends back error and diagnostic messages so network engineers can test, troubleshoot, and monitor connectivity end-to-end.</p>
+
+</section>
+
+<!-- 01 WHAT IS ICMP -->
+<section class="section" id="what" style="background:var(--paper);">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <div>
+        <div class="section-tag">// From the Video — Slide 3</div>
+        <h2 class="section-title">WHAT IS ICMP?</h2>
+      </div>
+    </div>
+
+    <p class="lead">ICMP (Internet Control Message Protocol) works alongside TCP/IP at Layer 3. Unlike TCP or UDP which carry application data, ICMP is used exclusively for <strong>reporting errors and sending diagnostic information</strong> about the network.</p>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="concept-card-head" style="background:var(--blue);">ERROR REPORTING</div>
+        <div class="concept-card-body">Reports errors that occur during TCP/IP protocol operation — for example, when a router can't reach a destination or a packet exceeds the maximum hop count.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-head" style="background:var(--green);">CONNECTION INFO</div>
+        <div class="concept-card-body">Communicates <strong>status information about the network connection</strong> between devices — used to check whether a path to a destination is available and working.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-head" style="background:var(--rust);">DIAGNOSTICS</div>
+        <div class="concept-card-body">Powers the two essential network troubleshooting commands: <strong>"ping"</strong> (test reachability) and <strong>"traceroute / tracert"</strong> (map the path to a destination).</div>
+      </div>
+    </div>
+
+    <!-- ICMP Echo animated diagram -->
+    <div class="gif-container" style="max-width:100%;margin-top:2rem;">
+      <div class="gif-title">ANIMATED — ICMP Echo Request &amp; Reply Flow</div>
+      <div class="gif-stage" style="background:#0f1117;padding:2rem 2.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem;">
+          <div style="text-align:center;">
+            <div style="font-family:'DM Mono',monospace;font-size:0.72rem;color:rgba(255,255,255,0.4);margin-bottom:0.5rem;">Source</div>
+            <div style="font-size:2rem;">💻</div>
+            <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--blue);margin-top:0.3rem;">192.168.1.101</div>
+          </div>
+          <div style="flex:1;padding:0 2rem;">
+            <div id="flowReq" style="text-align:center;margin-bottom:0.6rem;opacity:0.3;transition:opacity 0.4s;">
+              <div style="font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--rust);margin-bottom:4px;">ICMP Echo Request &gt;&gt;&gt;</div>
+              <div style="height:2px;background:linear-gradient(to right, var(--rust), transparent, var(--rust));border-radius:2px;position:relative;">
+                <div id="reqDot" style="position:absolute;top:-5px;left:0;width:12px;height:12px;background:var(--rust);border-radius:50%;transition:left 0.8s ease-in-out;"></div>
+              </div>
+            </div>
+            <div style="text-align:center;padding:0.6rem;border:1px solid rgba(255,255,255,0.1);border-radius:4px;font-family:'DM Mono',monospace;font-size:0.72rem;color:rgba(255,255,255,0.35);">
+              ☁️ Internet / Network
+            </div>
+            <div id="flowRep" style="text-align:center;margin-top:0.6rem;opacity:0.3;transition:opacity 0.4s;">
+              <div style="height:2px;background:linear-gradient(to left, var(--green), transparent, var(--green));border-radius:2px;position:relative;">
+                <div id="repDot" style="position:absolute;top:-5px;right:0;width:12px;height:12px;background:var(--green);border-radius:50%;transition:right 0.8s ease-in-out;"></div>
+              </div>
+              <div style="font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--green);margin-top:4px;">&lt;&lt;&lt; ICMP Echo Reply</div>
+            </div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'DM Mono',monospace;font-size:0.72rem;color:rgba(255,255,255,0.4);margin-bottom:0.5rem;">Destination</div>
+            <div style="font-size:2rem;">🖥️</div>
+            <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--green);margin-top:0.3rem;">192.0.34.166</div>
+          </div>
+        </div>
+        <div id="echoStatus" style="text-align:center;font-family:'DM Mono',monospace;font-size:0.75rem;color:rgba(255,255,255,0.35);margin-top:1rem;">← Click ANIMATE to see the ICMP exchange →</div>
+        <div style="text-align:center;margin-top:1rem;display:flex;gap:0.5rem;justify-content:center;">
+          <button class="run-btn" style="font-size:0.85rem;padding:0.5rem 1.4rem;" onclick="animateEcho()">▶ ANIMATE</button>
+          <button class="run-btn secondary" style="font-size:0.85rem;padding:0.5rem 1.2rem;" onclick="resetEcho()">↺ RESET</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ICMP Packet Structure -->
+    <div style="margin-top:2.5rem;">
+      <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:1px;margin-bottom:0.5rem;">ICMP MESSAGE STRUCTURE</h3>
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem;">Each ICMP message has a fixed 8-byte header. The Type field identifies the purpose of the message.</p>
+      <div class="packet-row">
+        <div class="pkt-field pkt-f1"><div class="pkt-field-name" style="color:var(--blue);">TYPE</div><div class="pkt-field-bits">8 bits</div></div>
+        <div class="pkt-field pkt-f2"><div class="pkt-field-name" style="color:var(--rust);">CODE</div><div class="pkt-field-bits">8 bits</div></div>
+        <div class="pkt-field pkt-f3"><div class="pkt-field-name" style="color:var(--green);">CHECKSUM</div><div class="pkt-field-bits">16 bits</div></div>
+        <div class="pkt-field pkt-f4"><div class="pkt-field-name" style="color:#9c701f;">IDENTIFIER + SEQUENCE</div><div class="pkt-field-bits">32 bits</div></div>
+        <div class="pkt-field pkt-f5"><div class="pkt-field-name" style="color:var(--muted);">DATA / PAYLOAD</div><div class="pkt-field-bits">variable</div></div>
+      </div>
+      <div class="note-box"><strong>Note:</strong> &nbsp; Default payload = 32 bytes (Windows) &nbsp;|&nbsp; Can be changed with <code>ping -l &lt;size&gt;</code> &nbsp;|&nbsp; Max useful payload ≈ 1472 bytes (MTU 1500 − 20 IP header − 8 ICMP header)</div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 PING -->
+<section class="section ping-section" id="ping">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <div>
+        <div class="section-tag">// ICMP Application — Slide 4</div>
+        <h2 class="section-title">PING</h2>
+      </div>
+    </div>
+
+    <p class="lead">Ping sends an <strong>ICMP Echo Request (Type 8)</strong> to a destination and waits for an <strong>ICMP Echo Reply (Type 0)</strong>. It measures round-trip time and packet loss — the essential first step in network troubleshooting.</p>
+
+    <!-- Packet exchange info boxes -->
+    <div class="info-two">
+      <div class="info-box" style="background:rgba(26,58,107,0.08);border-color:rgba(26,58,107,0.2);">
+        <h4 style="color:var(--blue);">📨 ICMP TYPE REQUEST (Type 8)</h4>
+        <p><strong>SRC:</strong> 192.168.1.102</p>
+        <p><strong>DST:</strong> 172.29.16.10 (www.basic.com)</p>
+        <p style="margin-top:0.6rem;">The source sends 4 packets, each containing 32 bytes of data by default.</p>
+      </div>
+      <div class="info-box" style="background:rgba(42,107,58,0.08);border-color:rgba(42,107,58,0.2);">
+        <h4 style="color:var(--green);">📩 ICMP TYPE REPLY (Type 0)</h4>
+        <p><strong>SRC:</strong> 172.29.16.10</p>
+        <p><strong>DST:</strong> 192.168.1.102</p>
+        <p style="margin-top:0.6rem;">The destination replies to every request, confirming it is reachable and responsive.</p>
+      </div>
+    </div>
+
+    <!-- Ping output fields explained -->
+    <div class="gif-container" style="max-width:100%;">
+      <div class="gif-title">PING OUTPUT — Reading the Results</div>
+      <div class="gif-stage" style="background:#0f1117;padding:1.5rem 2rem;">
+        <div class="terminal" style="background:#111;border:none;">
+          <div class="terminal-body">
+            <div class="term-cmd">C:\&gt;ping 172.29.16.10</div>
+            <div class="term-out">&nbsp;</div>
+            <div class="term-out">Pinging <span class="term-highlight">172.29.16.10</span> with <span class="term-highlight">32 bytes</span> of data:</div>
+            <div class="term-out">&nbsp;</div>
+            <div class="term-reply">Reply from 172.29.16.10: bytes=32 time&lt;1ms TTL=125</div>
+            <div class="term-reply">Reply from 172.29.16.10: bytes=32 time&lt;1ms TTL=125</div>
+            <div class="term-reply">Reply from 172.29.16.10: bytes=32 time&lt;1ms TTL=125</div>
+            <div class="term-reply">Reply from 172.29.16.10: bytes=32 time&lt;1ms TTL=125</div>
+          </div>
+        </div>
+        <!-- Annotated fields -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:1.2rem;">
+          <div style="padding:0.8rem;background:rgba(42,255,42,0.06);border:1px solid rgba(42,255,42,0.15);border-radius:3px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:0.8rem;letter-spacing:2px;color:#6fd46f;margin-bottom:0.3rem;">REPLY FROM</div>
+            <div style="font-size:0.82rem;color:rgba(255,255,255,0.6);">Confirms destination responded — host is reachable</div>
+          </div>
+          <div style="padding:0.8rem;background:rgba(126,179,255,0.06);border:1px solid rgba(126,179,255,0.15);border-radius:3px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:0.8rem;letter-spacing:2px;color:#7eb3ff;margin-bottom:0.3rem;">BYTES</div>
+            <div style="font-size:0.82rem;color:rgba(255,255,255,0.6);">Size of the data payload (default 32 B; change with <code>-l</code>)</div>
+          </div>
+          <div style="padding:0.8rem;background:rgba(255,189,46,0.06);border:1px solid rgba(255,189,46,0.15);border-radius:3px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:0.8rem;letter-spacing:2px;color:#ffbd2e;margin-bottom:0.3rem;">TIME</div>
+            <div style="font-size:0.82rem;color:rgba(255,255,255,0.6);">Round-trip latency in milliseconds — lower is better</div>
+          </div>
+          <div style="padding:0.8rem;background:rgba(201,74,42,0.06);border:1px solid rgba(201,74,42,0.2);border-radius:3px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:0.8rem;letter-spacing:2px;color:var(--rust);margin-bottom:0.3rem;">TTL</div>
+            <div style="font-size:0.82rem;color:rgba(255,255,255,0.6);">Time To Live — prevents infinite routing loops (decremented by 1 at each router)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Ping Simulator -->
+    <div style="margin-top:2rem;">
+      <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;color:var(--paper);margin-bottom:1.2rem;">INTERACTIVE PING SIMULATOR</h3>
+      <div class="field-row">
+        <div class="field-group">
+          <div class="field-label">Target IP / Host</div>
+          <input class="field-input" id="pingTarget" value="172.29.16.10" placeholder="e.g. 8.8.8.8">
+        </div>
+        <div class="field-group">
+          <div class="field-label">Packet Size (bytes)</div>
+          <input class="field-input field-input-sm" id="pingSize" value="32" type="number" min="1" max="1472">
+        </div>
+        <div class="field-group">
+          <div class="field-label">Count</div>
+          <input class="field-input field-input-sm" id="pingCount" value="4" type="number" min="1" max="8">
+        </div>
+        <button class="run-btn" onclick="runPing()">▶ PING</button>
+        <button class="run-btn secondary" onclick="clearPing()">✕ CLEAR</button>
+      </div>
+      <div id="pingOut" class="terminal">
+        <div class="terminal-bar">
+          <div class="term-btn term-close"></div>
+          <div class="term-btn term-min"></div>
+          <div class="term-btn term-max"></div>
+          <div class="term-title">COMMAND PROMPT</div>
+        </div>
+        <div class="terminal-body" id="pingBody">
+          <div class="term-out" style="color:rgba(255,255,255,0.25);">// Enter target and click PING to simulate</div>
+          <div style="display:inline-block;"><span class="term-cmd">C:\&gt;</span><span class="term-cursor"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TTL Explanation -->
+    <div style="margin-top:2.5rem;">
+      <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;color:var(--paper);margin-bottom:0.5rem;">TTL — TIME TO LIVE</h3>
+      <p style="color:rgba(255,255,255,0.5);font-size:0.9rem;margin-bottom:1.2rem;">Each router along the path decrements the TTL by 1. When TTL hits 0, the packet is discarded and an ICMP "Time Exceeded" message is sent back — this prevents infinite loops.</p>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:4px;padding:1.2rem 1.5rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:0.8rem;letter-spacing:2px;color:var(--gold);margin-bottom:0.8rem;">TTL COUNTDOWN — Starting at 128 (Windows default)</div>
+        <div class="ttl-viz" id="ttlViz"></div>
+        <div class="note-box" style="background:rgba(255,255,255,0.04);border-left-color:var(--rust);">
+          <strong>Common starting TTL values:</strong> &nbsp; Windows = 128 &nbsp;|&nbsp; Linux/Mac = 64 &nbsp;|&nbsp; Cisco IOS = 255 &nbsp;|&nbsp; You can estimate hops from destination TTL: e.g. received TTL=125 → ~3 hops from a Windows host
+        </div>
+      </div>
+    </div>
+
+    <!-- Ping flags -->
+    <div style="margin-top:2rem;">
+      <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;color:var(--paper);margin-bottom:1rem;">USEFUL PING FLAGS</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0.8rem;">
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:3px;padding:0.9rem;">
+          <div style="font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--rust);margin-bottom:0.3rem;">ping 8.8.8.8 -l 40</div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);">Set payload size to 40 bytes</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:3px;padding:0.9rem;">
+          <div style="font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--rust);margin-bottom:0.3rem;">ping 8.8.8.8 -t</div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);">Continuous ping until Ctrl+C</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:3px;padding:0.9rem;">
+          <div style="font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--rust);margin-bottom:0.3rem;">ping 8.8.8.8 -n 10</div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);">Send 10 echo requests</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:3px;padding:0.9rem;">
+          <div style="font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--rust);margin-bottom:0.3rem;">ping www.google.com</div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);">Ping by hostname (tests DNS too)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 TRACEROUTE -->
+<section class="section trace-section" id="traceroute">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <div>
+        <div class="section-tag">// ICMP Application — Slide 5</div>
+        <h2 class="section-title">TRACEROUTE / TRACERT</h2>
+      </div>
+    </div>
+
+    <p class="lead">Tracert (Windows) / traceroute (Linux) tests <strong>end-to-end connectivity</strong> by revealing every Layer-3 device the packet passes through — it maps the full path and measures latency at each hop.</p>
+
+    <div class="info-two">
+      <div class="info-box" style="background:var(--paper);">
+        <h4 style="color:var(--blue);">HOW IT WORKS</h4>
+        <ul>
+          <li>Sends ICMP packets with <strong>TTL = 1</strong>, then 2, 3 … up to 30</li>
+          <li>Each router decrements TTL; when it hits 0 it sends back an ICMP <strong>"Time Exceeded"</strong> message</li>
+          <li>Tracert collects those replies to build the hop-by-hop map</li>
+          <li>Final destination replies with ICMP <strong>"Echo Reply"</strong> — trace complete</li>
+        </ul>
+      </div>
+      <div class="info-box" style="background:var(--paper);">
+        <h4 style="color:var(--rust);">READING THE OUTPUT</h4>
+        <ul>
+          <li><strong>Hop #</strong> — sequential router number</li>
+          <li><strong>3× latency values</strong> — three probes sent per hop (in ms)</li>
+          <li><strong>Hostname</strong> — reverse-DNS name of the router</li>
+          <li><strong>IP address</strong> — router's interface IP</li>
+          <li><strong>* * *</strong> — router didn't respond (firewall drops ICMP)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Animated traceroute -->
+    <div class="tracert-anim">
+      <div class="ta-title">▶ ANIMATED TRACEROUTE — PC → yahoo.com (66.94.234.13)</div>
+      <div class="ta-path" id="taPath">
+        <div class="ta-node" id="tn0">PC</div>
+        <div class="ta-arrow">→</div>
+        <div class="ta-node" id="tn1">R1</div>
+        <div class="ta-arrow">→</div>
+        <div class="ta-node" id="tn2">R2</div>
+        <div class="ta-arrow">→</div>
+        <div class="ta-node" id="tn3">R3</div>
+        <div class="ta-arrow">→</div>
+        <div class="ta-node" id="tn4">···N</div>
+        <div class="ta-arrow">→</div>
+        <div class="ta-node" id="tn5">🌐</div>
+      </div>
+      <div class="ta-hops" id="taHops">
+        <div class="ta-hop-line" id="th0"><span class="ta-hop-num">1</span><span class="ta-hop-times"> 1ms  1ms  1ms</span><span class="ta-hop-host"> rtp-pvancil-vpn.cisco.com </span><span class="ta-hop-ip">[10.83.2.161]</span></div>
+        <div class="ta-hop-line" id="th1"><span class="ta-hop-num">2</span><span class="ta-hop-times"> 67ms 59ms 57ms</span><span class="ta-hop-host"> rtp5-access-sdg1-t10.cisco.com </span><span class="ta-hop-ip">[10.82.96.2]</span></div>
+        <div class="ta-hop-line" id="th2"><span class="ta-hop-num">3</span><span class="ta-hop-times"> 58ms 58ms 57ms</span><span class="ta-hop-host"> rtp5-access-gw1-vlan100.cisco.com </span><span class="ta-hop-ip">[10.83.100.9]</span></div>
+        <div class="ta-hop-line" id="th3"><span class="ta-hop-num">4</span><span class="ta-hop-times"> 58ms 58ms 57ms</span><span class="ta-hop-host"> rtp7-bb-gw1-ge5-8.cisco.com </span><span class="ta-hop-ip">[10.81.254.117]</span></div>
+        <div class="ta-hop-line" id="th4"><span class="ta-hop-num">5</span><span class="ta-hop-times"> 60ms 59ms 57ms</span><span class="ta-hop-host"> rtp5-rbb-gw1-ge4-2.cisco.com </span><span class="ta-hop-ip">[10.81.254.181]</span></div>
+        <div class="ta-hop-line" id="th5"><span class="ta-hop-num">N</span><span class="ta-hop-times" style="color:#6fd46f;"> Trace complete!</span><span class="ta-hop-host" style="color:#ffbd2e;"> yahoo.com </span><span class="ta-hop-ip">[66.94.234.13]</span></div>
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:1.2rem;">
+        <button class="run-btn" style="font-size:0.82rem;padding:0.5rem 1.2rem;" onclick="runTrace()">▶ RUN TRACERT</button>
+        <button class="run-btn secondary" style="font-size:0.82rem;padding:0.5rem 1.2rem;" onclick="resetTrace()">↺ RESET</button>
+      </div>
+    </div>
+
+    <!-- Tracert terminal sample -->
+    <div class="terminal" style="margin-top:1.5rem;">
+      <div class="terminal-bar">
+        <div class="term-btn term-close"></div>
+        <div class="term-btn term-min"></div>
+        <div class="term-btn term-max"></div>
+        <div class="term-title">C:\WINDOWS\system32\cmd.exe</div>
+      </div>
+      <div class="terminal-body">
+        <div class="term-cmd">C:\Documents and Settings\pvancil&gt;tracert yahoo.com</div>
+        <div class="term-out">&nbsp;</div>
+        <div class="term-out">Tracing route to <span class="term-highlight">yahoo.com [66.94.234.13]</span></div>
+        <div class="term-out">over a maximum of <span class="term-highlight">30 hops</span>:</div>
+        <div class="term-out">&nbsp;</div>
+        <div class="term-stat">  1 &nbsp; 1ms &nbsp; 1ms &nbsp; 1ms &nbsp; rtp-pvancil-vpn.cisco.com [10.83.2.161]</div>
+        <div class="term-stat">  2 &nbsp;67ms &nbsp;59ms &nbsp;57ms &nbsp; rtp5-access-sdg1-t10.cisco.com [10.82.96.2]</div>
+        <div class="term-stat">  3 &nbsp;58ms &nbsp;58ms &nbsp;57ms &nbsp; rtp5-access-gw1-vlan100.cisco.com [10.83.100.9]</div>
+        <div class="term-stat">  4 &nbsp;58ms &nbsp;58ms &nbsp;57ms &nbsp; rtp7-bb-gw1-ge5-8.cisco.com [10.81.254.117]</div>
+        <div class="term-stat">  5 &nbsp;60ms &nbsp;59ms &nbsp;57ms &nbsp; rtp5-rbb-gw1-ge4-2.cisco.com [10.81.254.181]</div>
+        <div class="term-reply">  ... (trace continues to destination)</div>
+      </div>
+    </div>
+
+    <!-- OS Command Comparison -->
+    <div style="margin-top:2rem;">
+      <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;margin-bottom:1rem;">TRACEROUTE BY OPERATING SYSTEM</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem;">
+
+        <!-- Windows -->
+        <div style="border:1px solid var(--border);border-radius:4px;overflow:hidden;">
+          <div style="background:var(--blue);padding:0.65rem 1rem;display:flex;align-items:center;gap:0.6rem;">
+            <span style="font-size:1.1rem;">🪟</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:#fff;">WINDOWS</span>
+          </div>
+          <div style="padding:1rem;background:var(--paper);">
+            <div style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--muted);margin-bottom:0.6rem;">Command:</div>
+            <div style="background:#1a1a1a;border-radius:3px;padding:0.6rem 0.9rem;font-family:'DM Mono',monospace;font-size:0.85rem;color:#27c93f;margin-bottom:0.8rem;">tracert yahoo.com</div>
+            <ul style="font-size:0.84rem;color:var(--muted);padding-left:1.2rem;line-height:1.9;">
+              <li>Uses <strong style="color:var(--ink);">ICMP Echo Request</strong> with increasing TTL</li>
+              <li>Max 30 hops by default</li>
+              <li>3 probes per hop</li>
+              <li>Flags: <code style="font-size:0.8rem;color:var(--rust);">tracert -h 50 yahoo.com</code> (set max hops)</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Linux -->
+        <div style="border:1px solid var(--border);border-radius:4px;overflow:hidden;">
+          <div style="background:var(--rust);padding:0.65rem 1rem;display:flex;align-items:center;gap:0.6rem;">
+            <span style="font-size:1.1rem;">🐧</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:#fff;">LINUX</span>
+          </div>
+          <div style="padding:1rem;background:var(--paper);">
+            <div style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--muted);margin-bottom:0.6rem;">Command:</div>
+            <div style="background:#1a1a1a;border-radius:3px;padding:0.6rem 0.9rem;font-family:'DM Mono',monospace;font-size:0.85rem;color:#27c93f;margin-bottom:0.8rem;">traceroute yahoo.com</div>
+            <ul style="font-size:0.84rem;color:var(--muted);padding-left:1.2rem;line-height:1.9;">
+              <li>Uses <strong style="color:var(--ink);">UDP</strong> by default (port 33434+)</li>
+              <li>Add <code style="font-size:0.8rem;color:var(--rust);">-I</code> to use ICMP instead</li>
+              <li>Max 30 hops by default</li>
+              <li>Flags: <code style="font-size:0.8rem;color:var(--rust);">traceroute -m 50 yahoo.com</code> (set max hops)</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- macOS -->
+        <div style="border:1px solid var(--border);border-radius:4px;overflow:hidden;">
+          <div style="background:var(--green);padding:0.65rem 1rem;display:flex;align-items:center;gap:0.6rem;">
+            <span style="font-size:1.1rem;">🍎</span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:#fff;">macOS</span>
+          </div>
+          <div style="padding:1rem;background:var(--paper);">
+            <div style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--muted);margin-bottom:0.6rem;">Command:</div>
+            <div style="background:#1a1a1a;border-radius:3px;padding:0.6rem 0.9rem;font-family:'DM Mono',monospace;font-size:0.85rem;color:#27c93f;margin-bottom:0.8rem;">traceroute yahoo.com</div>
+            <ul style="font-size:0.84rem;color:var(--muted);padding-left:1.2rem;line-height:1.9;">
+              <li>Same syntax as Linux (<code style="font-size:0.8rem;color:var(--rust);">traceroute</code>)</li>
+              <li>Uses <strong style="color:var(--ink);">UDP</strong> by default</li>
+              <li>Add <code style="font-size:0.8rem;color:var(--rust);">-I</code> for ICMP mode</li>
+              <li>Flags: <code style="font-size:0.8rem;color:var(--rust);">traceroute -m 50 yahoo.com</code> (set max hops)</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick comparison table -->
+      <table style="width:100%;border-collapse:collapse;margin-top:1.5rem;font-size:0.85rem;">
+        <thead>
+          <tr>
+            <th style="background:var(--ink);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:2px;padding:0.65rem 1rem;text-align:left;">OS</th>
+            <th style="background:var(--ink);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:2px;padding:0.65rem 1rem;text-align:left;">Command</th>
+            <th style="background:var(--ink);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:2px;padding:0.65rem 1rem;text-align:left;">Protocol (default)</th>
+            <th style="background:var(--ink);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;letter-spacing:2px;padding:0.65rem 1rem;text-align:left;">Force ICMP</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:0.65rem 1rem;border-bottom:1px solid var(--border);">🪟 Windows</td>
+            <td style="padding:0.65rem 1rem;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;color:var(--blue);">tracert</td>
+            <td style="padding:0.65rem 1rem;border-bottom:1px solid var(--border);">ICMP Echo Request</td>
+            <td style="padding:0.65rem 1rem;border-bottom:1px solid var(--border);color:var(--muted);">— (always ICMP)</td>
+          </tr>
+          <tr style="background:rgba(0,0,0,0.03);">
+            <td style="padding:0.65rem 1rem;border-bottom:1px solid var(--border);">🐧 Linux</td>
+            <td style="padding:0.65rem 1rem;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;color:var(--blue);">traceroute</td>
+            <td style="padding:0.65rem 1rem;border-bottom:1px solid var(--border);">UDP (port 33434+)</td>
+            <td style="padding:0.65rem 1rem;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;color:var(--rust);">traceroute -I</td>
+          </tr>
+          <tr>
+            <td style="padding:0.65rem 1rem;">🍎 macOS</td>
+            <td style="padding:0.65rem 1rem;font-family:'DM Mono',monospace;color:var(--blue);">traceroute</td>
+            <td style="padding:0.65rem 1rem;">UDP (port 33434+)</td>
+            <td style="padding:0.65rem 1rem;font-family:'DM Mono',monospace;color:var(--rust);">traceroute -I</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="note-box" style="margin-top:1rem;">
+        <strong>Key difference:</strong> &nbsp; Windows <code>tracert</code> always uses ICMP, so it may be blocked by firewalls that filter ICMP. &nbsp;Linux/macOS <code>traceroute</code> uses UDP by default, which can pass through more firewalls — use <code>-I</code> to switch to ICMP mode.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 ICMP MESSAGE TYPES -->
+<section class="section" id="types" style="background:var(--paper);">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <div>
+        <div class="section-tag">// Reference</div>
+        <h2 class="section-title">ICMP MESSAGE TYPES</h2>
+      </div>
+    </div>
+    <p class="lead">ICMP defines many message types, each identified by a numeric Type field. The most important ones for network troubleshooting are:</p>
+    <table class="type-table">
+      <thead><tr><th>Type</th><th>Name</th><th>Direction</th><th>Used by</th></tr></thead>
+      <tbody>
+        <tr><td class="type-num">0</td><td class="type-name">Echo Reply</td><td>Destination → Source</td><td class="type-use">Ping — response to Type 8</td></tr>
+        <tr><td class="type-num">3</td><td class="type-name">Destination Unreachable</td><td>Router → Source</td><td class="type-use">Error: host/port/network not reachable</td></tr>
+        <tr><td class="type-num">5</td><td class="type-name">Redirect</td><td>Router → Host</td><td class="type-use">Router tells host of a better route</td></tr>
+        <tr><td class="type-num">8</td><td class="type-name">Echo Request</td><td>Source → Destination</td><td class="type-use">Ping — initiates the test</td></tr>
+        <tr><td class="type-num">11</td><td class="type-name">Time Exceeded</td><td>Router → Source</td><td class="type-use">TTL reached 0 — used by traceroute</td></tr>
+        <tr><td class="type-num">12</td><td class="type-name">Parameter Problem</td><td>Router → Source</td><td class="type-use">Bad IP header field</td></tr>
+        <tr><td class="type-num">30</td><td class="type-name">Traceroute</td><td>Source → Router</td><td class="type-use">Information request (informational)</td></tr>
+      </tbody>
+    </table>
+    <div class="note-box"><strong>Key pair for ping:</strong> &nbsp; Source sends Type 8 (Echo Request) → Destination replies with Type 0 (Echo Reply) &nbsp;|&nbsp; <strong>Key for tracert:</strong> &nbsp; TTL expired triggers Type 11 (Time Exceeded) from each intermediate router</div>
+  </div>
+</section>
+
+<!-- 05 QUIZ -->
+<section class="section quiz-section" id="quiz">
+  <div class="section-inner" style="max-width:720px;">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <div>
+        <div class="section-tag">// Test Your Knowledge</div>
+        <h2 class="section-title">QUIZ</h2>
+      </div>
+    </div>
+    <div id="quizProgress"><div id="quizBar" style="width:0%"></div></div>
+    <div id="quizArea">
+      <div class="q-text" id="qText"></div>
+      <div class="q-opts" id="qOpts"></div>
+      <div class="q-feedback" id="qFeedback"></div>
+      <button class="q-next" id="qNext" onclick="nextQ()">NEXT →</button>
+    </div>
+    <div id="quizResult" style="display:none;text-align:center;padding:2rem 0;">
+      <div id="quizScore"></div>
+      <div id="quizMsg"></div>
+      <button class="restart-btn" onclick="startQuiz()">↺ TRY AGAIN</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <strong>ICMP</strong> — Internet Control Message Protocol &nbsp;·&nbsp; Layer 3 &nbsp;·&nbsp; Network Fundamentals Series &nbsp;·&nbsp; ninehua.com
+</footer>
+
+<script>
+// ============ ECHO ANIMATION ============
+let echoRunning = false;
+function animateEcho() {
+  if (echoRunning) return; echoRunning = true;
+  const req = document.getElementById('flowReq');
+  const rep = document.getElementById('flowRep');
+  const dot = document.getElementById('reqDot');
+  const rdot = document.getElementById('repDot');
+  const status = document.getElementById('echoStatus');
+  req.style.opacity = '1';
+  status.textContent = '⏳ Sending ICMP Echo Request (Type 8)…';
+  status.style.color = 'var(--rust)';
+  setTimeout(() => {
+    dot.style.left = 'calc(100% - 12px)';
+  }, 100);
+  setTimeout(() => {
+    status.textContent = '⏳ Waiting for Echo Reply (Type 0)…';
+    status.style.color = '#7eb3ff';
+    rep.style.opacity = '1';
+    setTimeout(() => {
+      rdot.style.right = 'calc(100% - 12px)';
+    }, 100);
+  }, 1000);
+  setTimeout(() => {
+    status.textContent = '✅ Echo Reply received — Host is REACHABLE!';
+    status.style.color = '#6fd46f';
+    echoRunning = false;
+  }, 2200);
+}
+function resetEcho() {
+  echoRunning = false;
+  document.getElementById('flowReq').style.opacity = '0.3';
+  document.getElementById('flowRep').style.opacity = '0.3';
+  document.getElementById('reqDot').style.left = '0';
+  document.getElementById('repDot').style.right = '0';
+  document.getElementById('echoStatus').textContent = '← Click ANIMATE to see the ICMP exchange →';
+  document.getElementById('echoStatus').style.color = 'rgba(255,255,255,0.35)';
+}
+
+// ============ TTL VISUALIZER ============
+function buildTTL() {
+  const el = document.getElementById('ttlViz'); if (!el) return;
+  const hops = [
+    {ttl:128, label:'SRC', color:'#7eb3ff'},
+    {ttl:127, label:'R1', color:'#aaa'},
+    {ttl:126, label:'R2', color:'#aaa'},
+    {ttl:125, label:'DST\nRcvd', color:'#6fd46f'},
+  ];
+  hops.forEach((h, i) => {
+    if (i > 0) {
+      const a = document.createElement('span'); a.className = 'ttl-arrow'; a.textContent = '→'; el.appendChild(a);
+    }
+    const wrap = document.createElement('div'); wrap.className = 'ttl-hop';
+    const val = document.createElement('div'); val.className = 'ttl-val';
+    val.style.borderColor = h.color; val.style.color = h.color; val.textContent = h.ttl;
+    const lbl = document.createElement('div'); lbl.className = 'ttl-label'; lbl.style.whiteSpace = 'pre'; lbl.textContent = h.label;
+    wrap.appendChild(val); wrap.appendChild(lbl); el.appendChild(wrap);
+  });
+}
+buildTTL();
+
+// ============ PING SIMULATOR ============
+let pingRunning = false;
+function clearPing() {
+  document.getElementById('pingBody').innerHTML = '<div class="term-out" style="color:rgba(255,255,255,0.25);">// Enter target and click PING to simulate</div><div style="display:inline-block;"><span class="term-cmd">C:\\&gt;</span><span class="term-cursor"></span></div>';
+  pingRunning = false;
+}
+function runPing() {
+  if (pingRunning) return;
+  const target = document.getElementById('pingTarget').value.trim() || '172.29.16.10';
+  const size = Math.max(1, Math.min(1472, parseInt(document.getElementById('pingSize').value) || 32));
+  const count = Math.max(1, Math.min(8, parseInt(document.getElementById('pingCount').value) || 4));
+  const body = document.getElementById('pingBody');
+  body.innerHTML = '';
+  pingRunning = true;
+
+  const lines = [];
+  lines.push({t:0, html:`<div class="term-cmd">C:\\&gt;ping ${target} -l ${size} -n ${count}</div>`});
+  lines.push({t:100, html:`<div class="term-out">&nbsp;</div>`});
+  lines.push({t:200, html:`<div class="term-out">Pinging <span class="term-highlight">${target}</span> with <span class="term-highlight">${size} bytes</span> of data:</div>`});
+  lines.push({t:300, html:`<div class="term-out">&nbsp;</div>`});
+
+  // Simulate replies
+  const baseTime = target.includes('8.8.8') ? 22 : (target.includes('172.29') ? 1 : Math.floor(Math.random()*30)+5);
+  const ttlBase = target.includes('8.8.8') ? 54 : 125;
+  for (let i = 0; i < count; i++) {
+    const jitter = Math.floor(Math.random() * 4);
+    const t = baseTime + jitter;
+    const timeStr = t < 1 ? '<1ms' : t + 'ms';
+    lines.push({t: 600 + i * 600, html:`<div class="term-reply">Reply from ${target}: bytes=${size} time=${timeStr} TTL=${ttlBase}</div>`});
+  }
+
+  const sent = count, recv = count, lost = 0;
+  lines.push({t: 600 + count * 600 + 100, html:`<div class="term-out">&nbsp;</div>`});
+  lines.push({t: 600 + count * 600 + 200, html:`<div class="term-stat">Ping statistics for ${target}:</div>`});
+  lines.push({t: 600 + count * 600 + 300, html:`<div class="term-stat">&nbsp;&nbsp;&nbsp;&nbsp;Packets: Sent = ${sent}, Received = ${recv}, Lost = ${lost} (0% loss),</div>`});
+  lines.push({t: 600 + count * 600 + 400, html:`<div class="term-stat">Approximate round trip times in milli-seconds:</div>`});
+  lines.push({t: 600 + count * 600 + 500, html:`<div class="term-stat">&nbsp;&nbsp;&nbsp;&nbsp;Minimum = ${baseTime}ms, Maximum = ${baseTime+3}ms, Average = ${baseTime+1}ms</div>`});
+  lines.push({t: 600 + count * 600 + 700, html:`<div style="display:inline-block;"><span class="term-cmd">C:\\&gt;</span><span class="term-cursor"></span></div>`});
+
+  lines.forEach(({t, html}) => {
+    setTimeout(() => {
+      if (!pingRunning) return;
+      const d = document.createElement('div');
+      d.innerHTML = html;
+      body.appendChild(d.firstChild);
+    }, t);
+  });
+  setTimeout(() => { pingRunning = false; }, 600 + count * 600 + 800);
+}
+
+// ============ TRACEROUTE ANIMATION ============
+let traceRunning = false;
+function resetTrace() {
+  traceRunning = false;
+  for (let i = 0; i <= 5; i++) {
+    const n = document.getElementById('tn'+i);
+    if (n) { n.className = 'ta-node'; }
+    if (i < 6) {
+      const h = document.getElementById('th'+(i));
+      if (h) h.classList.remove('show');
+    }
+  }
+}
+function runTrace() {
+  if (traceRunning) return; traceRunning = true;
+  resetTrace();
+  const nodeMap = [0,1,2,3,4,5];
+  const hopMap  = [0,1,2,3,4,5];
+  nodeMap.forEach((ni, seq) => {
+    setTimeout(() => {
+      if (!traceRunning) return;
+      const prev = document.getElementById('tn'+(ni-1));
+      if (prev) { prev.className = 'ta-node done'; }
+      const cur = document.getElementById('tn'+ni);
+      if (cur) { cur.className = 'ta-node active'; }
+      if (seq > 0) {
+        const h = document.getElementById('th'+(seq-1));
+        if (h) h.classList.add('show');
+      }
+    }, seq * 700);
+  });
+  setTimeout(() => {
+    const last = document.getElementById('th5');
+    if (last) last.classList.add('show');
+    traceRunning = false;
+  }, nodeMap.length * 700 + 300);
+}
+
+// ============ QUIZ ============
+const questions = [
+  {q:"What does ICMP stand for?", opts:["Internet Communication Management Protocol","Internet Control Message Protocol","Internal Control Messaging Protocol","Inter-network Communication Messaging Protocol"], a:1, exp:"ICMP = Internet Control Message Protocol. It operates at Layer 3 alongside IP."},
+  {q:"At which OSI layer does ICMP operate?", opts:["Layer 2 (Data Link)","Layer 4 (Transport)","Layer 3 (Network)","Layer 7 (Application)"], a:2, exp:"ICMP works at Layer 3 (Network layer), embedded within IP packets."},
+  {q:"The 'ping' command uses which two ICMP types?", opts:["Type 3 and Type 5","Type 8 (Request) and Type 0 (Reply)","Type 11 and Type 30","Type 1 and Type 2"], a:1, exp:"Ping sends Type 8 (Echo Request) and the destination replies with Type 0 (Echo Reply)."},
+  {q:"In Windows, what is the default payload size for ping?", opts:["64 bytes","1024 bytes","32 bytes","128 bytes"], a:2, exp:"Windows ping sends 32 bytes of data by default. Use -l to change this."},
+  {q:"What does TTL stand for and what does it prevent?", opts:["Total Transfer Length — prevents large packets","Time To Live — prevents routing loops","Time To Load — prevents slow responses","Transfer To Layer — prevents layer mismatch"], a:1, exp:"TTL = Time To Live. Each router decrements it by 1. If it hits 0, the packet is discarded, preventing infinite routing loops."},
+  {q:"Which ICMP message type is sent by a router when TTL reaches 0?", opts:["Type 0 — Echo Reply","Type 3 — Destination Unreachable","Type 11 — Time Exceeded","Type 8 — Echo Request"], a:2, exp:"Type 11 (Time Exceeded) is what traceroute relies on — each router returns this when TTL expires, letting the source map the path."},
+  {q:"What does tracert/traceroute do that ping does NOT?", opts:["Measures round-trip time","Shows every router (hop) along the path to the destination","Sends 4 packets by default","Tests if the host is reachable"], a:1, exp:"Traceroute maps the full path — it reveals every Layer-3 device between source and destination, not just whether the destination is reachable."},
+  {q:"A ping result shows TTL=125. The source OS is Windows (default TTL=128). How many routers (hops) did the packet cross?", opts:["125 hops","3 hops","128 hops","1 hop"], a:1, exp:"128 − 125 = 3 hops. Each router decremented TTL by 1, so the packet crossed 3 routers."},
+  {q:"In tracert output, what does '* * *' mean on a hop line?", opts:["The router is very fast","The router filtered/dropped the ICMP probe (no response)","The destination was reached","Packet loss occurred on that hop only"], a:1, exp:"'* * *' means the router at that hop didn't return an ICMP Time Exceeded message — usually because a firewall blocks ICMP. It doesn't mean the connection is broken."},
+  {q:"Which ping flag changes the packet payload size?", opts:["-n (Windows)","  -t (Windows)","-l (Windows)","-r (Windows)"], a:2, exp:"ping -l <size> sets the payload size. For example, 'ping 8.8.8.8 -l 1472' tests with near-maximum non-fragmented payload."},
+];
+
+let qIdx = 0, score = 0, answered = false;
+function startQuiz() {
+  qIdx = 0; score = 0; answered = false;
+  document.getElementById('quizArea').style.display = 'block';
+  document.getElementById('quizResult').style.display = 'none';
+  renderQ();
+}
+function renderQ() {
+  answered = false;
+  const q = questions[qIdx];
+  document.getElementById('quizBar').style.width = (qIdx / questions.length * 100) + '%';
+  document.getElementById('qText').textContent = `Q${qIdx+1}/${questions.length} — ${q.q}`;
+  const opts = document.getElementById('qOpts'); opts.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const b = document.createElement('button'); b.className = 'q-opt'; b.textContent = o;
+    b.onclick = () => selectAnswer(i);
+    opts.appendChild(b);
+  });
+  const fb = document.getElementById('qFeedback'); fb.className = 'q-feedback'; fb.textContent = '';
+  document.getElementById('qNext').className = 'q-next';
+}
+function selectAnswer(idx) {
+  if (answered) return; answered = true;
+  const q = questions[qIdx];
+  const opts = document.querySelectorAll('.q-opt');
+  opts.forEach((b, i) => {
+    b.style.pointerEvents = 'none';
+    if (i === q.a) b.classList.add('correct');
+    else if (i === idx && idx !== q.a) b.classList.add('wrong');
+  });
+  const fb = document.getElementById('qFeedback');
+  if (idx === q.a) { score++; fb.className = 'q-feedback ok show'; fb.textContent = '✓ Correct! ' + q.exp; }
+  else { fb.className = 'q-feedback bad show'; fb.textContent = '✗ ' + q.exp; }
+  document.getElementById('qNext').className = 'q-next show';
+}
+function nextQ() {
+  qIdx++;
+  if (qIdx >= questions.length) {
+    document.getElementById('quizArea').style.display = 'none';
+    document.getElementById('quizResult').style.display = 'block';
+    document.getElementById('quizBar').style.width = '100%';
+    document.getElementById('quizScore').textContent = score + ' / ' + questions.length;
+    const pct = score / questions.length;
+    const msgs = ['Keep studying! Review the sections above and try again.', 'Good effort! A few concepts need more review.', 'Solid work! You understand the core ideas.', 'Excellent! You have a strong grasp of ICMP.', 'Perfect score! You mastered ICMP.'];
+    document.getElementById('quizMsg').textContent = msgs[Math.min(4, Math.floor(pct * 5))];
+  } else {
+    renderQ();
+  }
+}
+startQuiz();
+</script>
+</body>
+</html>

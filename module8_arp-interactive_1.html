@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARP — Address Resolution Protocol</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0f1117;--paper:#f5f2eb;--cream:#ede9df;--rust:#c94a2a;
+  --blue:#1a3a6b;--gold:#d4a039;--green:#2a6b3a;--green-light:#e8f5eb;
+  --muted:#6b6560;--border:#d0cab8;--orange:#d46a20;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;line-height:1.7;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;opacity:0.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:space-between;padding:0 3rem;height:56px;border-bottom:3px solid var(--gold);}
+.nav-brand{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;}
+.nav-brand span{color:var(--gold);}
+.nav-links{display:flex;gap:1.6rem;list-style:none;}
+.nav-links a{color:#aaa;text-decoration:none;font-size:0.78rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;transition:color 0.2s;}
+.nav-links a:hover{color:var(--gold);}
+
+/* HERO */
+.hero{background:var(--ink);color:var(--paper);padding:5rem 3rem 4rem;position:relative;overflow:hidden;}
+.hero::after{content:'ARP';position:absolute;right:40px;top:50%;transform:translateY(-50%);font-family:'Bebas Neue',sans-serif;font-size:14rem;color:rgba(255,255,255,0.03);letter-spacing:6px;pointer-events:none;}
+.hero-kicker{font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--gold);letter-spacing:3px;text-transform:uppercase;margin-bottom:1rem;opacity:0;animation:slideIn 0.6s ease forwards 0.2s;}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,8vw,6rem);line-height:0.95;letter-spacing:2px;max-width:760px;opacity:0;animation:slideIn 0.7s ease forwards 0.4s;}
+.hero h1 em{font-style:normal;color:var(--gold);}
+.hero-sub{font-size:1.05rem;color:rgba(255,255,255,0.55);max-width:620px;margin-top:1.5rem;opacity:0;animation:slideIn 0.7s ease forwards 0.6s;}
+@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* SECTIONS */
+.section{padding:5rem 3rem;}
+.section-inner{max-width:1100px;margin:0 auto;}
+.section-header{display:flex;align-items:flex-start;gap:1.5rem;margin-bottom:2.5rem;}
+.section-num{font-family:'Bebas Neue',sans-serif;font-size:5rem;color:rgba(0,0,0,0.06);line-height:1;flex-shrink:0;}
+.section-tag{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--gold);letter-spacing:3px;text-transform:uppercase;margin-bottom:0.4rem;}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:1px;}
+.lead{color:var(--muted);font-size:0.96rem;max-width:780px;margin-bottom:2rem;}
+.note-box{font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--muted);padding:0.8rem 1rem;background:var(--cream);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:2px;margin:1rem 0;}
+.note-box strong{color:var(--rust);}
+
+/* CONCEPT GRID */
+.concept-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.2rem;margin:1.5rem 0;}
+.concept-card{border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+.concept-card-head{padding:0.7rem 1rem;font-family:'Bebas Neue',sans-serif;font-size:0.95rem;letter-spacing:2px;color:#fff;}
+.concept-card-body{padding:1rem;font-size:0.87rem;color:var(--muted);line-height:1.6;}
+.concept-card-body strong{color:var(--ink);}
+
+/* INFO TWO */
+.info-two{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0;}
+.info-box{border:1px solid var(--border);border-radius:4px;padding:1.4rem;}
+.info-box h4{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;margin-bottom:0.7rem;}
+.info-box p,.info-box li{font-size:0.87rem;color:var(--muted);margin-bottom:0.3rem;}
+.info-box ul{padding-left:1.2rem;}
+.info-box strong{color:var(--ink);}
+
+/* PACKET TABLE */
+.pkt-wrap{overflow-x:auto;margin:1.2rem 0;}
+.pkt-table{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:0.78rem;min-width:620px;}
+.pkt-table th{padding:0.6rem 0.8rem;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:0.82rem;letter-spacing:1.5px;color:#fff;}
+.pkt-table td{padding:0.65rem 0.8rem;text-align:center;border:1px solid var(--border);}
+.pkt-th-eth{background:var(--blue);}
+.pkt-th-arp{background:var(--rust);}
+.pkt-td-bcast{color:var(--rust);font-weight:600;}
+.pkt-td-zero{color:var(--muted);}
+.pkt-td-src{color:var(--blue);font-weight:600;}
+.pkt-td-good{color:var(--green);font-weight:600;}
+
+/* TERMINAL */
+.terminal{background:#1a1a1a;border:1px solid #333;border-radius:4px;overflow:hidden;font-family:'DM Mono',monospace;font-size:0.83rem;margin:1.2rem 0;}
+.terminal-bar{background:#2d2d2d;padding:0.5rem 1rem;display:flex;align-items:center;gap:0.5rem;border-bottom:1px solid #333;}
+.term-btn{width:12px;height:12px;border-radius:50%;}
+.term-close{background:#ff5f56;}.term-min{background:#ffbd2e;}.term-max{background:#27c93f;}
+.term-title{font-size:0.7rem;color:#888;margin-left:0.5rem;letter-spacing:1px;}
+.terminal-body{padding:1rem 1.2rem;line-height:2;}
+.t-cmd{color:#27c93f;}.t-out{color:#ccc;}.t-hi{color:#7eb3ff;}.t-dyn{color:#6fd46f;}.t-sta{color:#ffbd2e;}
+.t-cursor{display:inline-block;width:8px;height:14px;background:#27c93f;animation:blink 1s step-end infinite;vertical-align:text-bottom;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ============================================================
+   GIF-STYLE ANIMATIONS  (pure CSS keyframes, infinite loop)
+   ============================================================ */
+.gif-wrap{border:2px solid var(--border);border-radius:6px;overflow:hidden;margin:1.5rem 0;}
+.gif-bar{background:var(--ink);color:var(--gold);padding:0.45rem 1rem;font-family:'Bebas Neue',sans-serif;font-size:0.85rem;letter-spacing:2px;display:flex;align-items:center;gap:0.5rem;}
+.gif-bar::before{content:'GIF';font-size:0.6rem;background:var(--rust);color:#fff;padding:1px 5px;border-radius:2px;}
+.gif-stage{padding:0;background:#0f1117;position:relative;overflow:hidden;}
+
+/* ------- GIF 1: ARP Request Broadcast (3-node symmetric) ------- */
+.arp-net{width:100%;height:300px;position:relative;}
+.arp-node{position:absolute;display:flex;flex-direction:column;align-items:center;gap:5px;font-family:'DM Mono',monospace;font-size:0.63rem;color:rgba(255,255,255,0.55);}
+.arp-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;border:2px solid;}
+.arp-ip {font-size:0.57rem;color:rgba(255,255,255,0.35);}
+.arp-mac{font-size:0.54rem;color:rgba(255,255,255,0.22);}
+/* node positions — perfectly symmetric */
+#an-pc1{left:5%;  top:50%;transform:translateY(-50%);}
+#an-sw {left:50%; top:50%;transform:translate(-50%,-50%);}
+#an-pc2{right:5%; top:50%;transform:translateY(-50%);}
+
+/* broadcast rings — centred exactly on the switch (left:50%, top:50% of .arp-net) */
+.bcast-ring{
+  position:absolute;
+  border-radius:50%;
+  border:2px solid rgba(212,160,57,0.7);
+  opacity:0;
+  /* start centred on switch at 0 size */
+  width:0;height:0;
+  left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  animation:bcast 6s ease-out infinite;
+}
+.bcast-ring:nth-child(2){animation-delay:2s;}
+.bcast-ring:nth-child(3){animation-delay:4s;}
+@keyframes bcast{
+  0%  {width:0;   height:0;   opacity:0.85; transform:translate(-50%,-50%);}
+  100%{width:300px;height:260px;opacity:0;   transform:translate(-50%,-50%);}
+}
+
+/* request packet PC1 → Switch */
+.req-pkt{
+  position:absolute;
+  width:58px;height:22px;
+  background:var(--rust);border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;font-size:0.52rem;color:#fff;font-weight:700;
+  top:calc(50% - 11px);
+  left:calc(5% + 56px);
+  opacity:0;
+  animation:reqTravel 6s ease-in-out infinite;
+}
+@keyframes reqTravel{
+  0%,10% {opacity:0; left:calc(5% + 56px);}
+  15%    {opacity:1; left:calc(5% + 56px);}
+  38%    {opacity:1; left:calc(50% - 29px);}
+  42%,100%{opacity:0;left:calc(50% - 29px);}
+}
+
+/* reply packet Switch → PC1 */
+.rep-pkt{
+  position:absolute;
+  width:58px;height:22px;
+  background:var(--green);border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;font-size:0.52rem;color:#fff;font-weight:700;
+  top:calc(50% + 16px);
+  left:calc(50% - 29px);
+  opacity:0;
+  animation:repTravel 6s ease-in-out infinite;
+}
+@keyframes repTravel{
+  0%,55%  {opacity:0; left:calc(50% - 29px);}
+  60%     {opacity:1; left:calc(50% - 29px);}
+  83%     {opacity:1; left:calc(5% + 56px);}
+  88%,100%{opacity:0; left:calc(5% + 56px);}
+}
+
+/* connector lines */
+.arp-line{position:absolute;top:50%;height:1px;background:rgba(255,255,255,0.08);}
+.arp-line-l{left:calc(5% + 56px); width:calc(45% - 56px);}
+.arp-line-r{left:50%;             width:calc(45% - 56px);}
+
+.arp-label{
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  font-family:'DM Mono',monospace;font-size:0.68rem;
+  color:rgba(255,255,255,0.4);white-space:nowrap;
+  transition:color 0.5s;
+}
+
+/* ------- GIF 2: ARP Cache Table ------- */
+.cache-anim{width:100%;padding:1.5rem 2rem;}
+.cache-title{font-family:'Bebas Neue',sans-serif;font-size:0.8rem;letter-spacing:2px;color:var(--gold);margin-bottom:1rem;}
+.cache-row{display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem;opacity:0;transform:translateX(-20px);transition:none;}
+.cache-row.show{animation:rowAppear 0.5s ease forwards;}
+@keyframes rowAppear{to{opacity:1;transform:translateX(0);}}
+.cache-ip{font-family:'DM Mono',monospace;font-size:0.8rem;color:#7eb3ff;width:110px;flex-shrink:0;}
+.cache-arrow{color:rgba(255,255,255,0.2);font-size:0.8rem;}
+.cache-mac{font-family:'DM Mono',monospace;font-size:0.8rem;color:#6fd46f;flex:1;}
+.cache-type{font-family:'DM Mono',monospace;font-size:0.7rem;padding:1px 6px;border-radius:2px;flex-shrink:0;}
+.type-dyn{background:rgba(42,107,58,0.3);color:#6fd46f;border:1px solid rgba(42,107,58,0.4);}
+.type-sta{background:rgba(212,160,57,0.2);color:#ffbd2e;border:1px solid rgba(212,160,57,0.3);}
+.cache-timer{font-family:'DM Mono',monospace;font-size:0.65rem;color:rgba(255,255,255,0.25);width:55px;text-align:right;}
+
+/* ------- GIF 3: Full ARP handshake step-by-step ------- */
+.hs-stage{width:100%;height:320px;position:relative;padding:1.5rem;}
+.hs-pc1{position:absolute;left:8%;top:50%;transform:translateY(-50%);text-align:center;}
+.hs-sw{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;}
+.hs-pc2{position:absolute;right:8%;top:50%;transform:translateY(-50%);text-align:center;}
+.hs-icon{font-size:2rem;display:block;margin-bottom:4px;}
+.hs-name{font-family:'DM Mono',monospace;font-size:0.62rem;color:rgba(255,255,255,0.5);}
+.hs-addr{font-family:'DM Mono',monospace;font-size:0.55rem;color:rgba(255,255,255,0.3);}
+/* step arrow - request */
+.hs-req{position:absolute;top:calc(50% - 30px);left:calc(8% + 60px);right:calc(50%);height:2px;background:var(--rust);opacity:0;transform-origin:left;animation:stepReq 4s ease infinite;}
+.hs-req::after{content:'▶';position:absolute;right:-8px;top:-8px;color:var(--rust);font-size:0.7rem;}
+@keyframes stepReq{0%,20%{opacity:0;right:calc(50%);}25%{opacity:1;}50%{opacity:1;right:calc(50% - 0%);}55%,100%{opacity:0;}}
+/* broadcast flood */
+.hs-flood1,.hs-flood2{position:absolute;top:calc(50% - 30px);height:2px;background:var(--rust);opacity:0;transform-origin:left;}
+.hs-flood1{left:calc(50%);right:calc(8% + 60px);animation:floodR 4s ease infinite;}
+.hs-flood1::after{content:'▶';position:absolute;right:-8px;top:-8px;color:var(--rust);font-size:0.7rem;}
+@keyframes floodR{0%,45%{opacity:0;}50%{opacity:1;}70%{opacity:1;}75%,100%{opacity:0;}}
+/* reply */
+.hs-rep{position:absolute;top:calc(50% + 10px);right:calc(8% + 60px);left:calc(50%);height:2px;background:var(--green);opacity:0;transform-origin:right;animation:stepRep 4s ease infinite;}
+.hs-rep::before{content:'◀';position:absolute;left:-8px;top:-8px;color:var(--green);font-size:0.7rem;}
+@keyframes stepRep{0%,70%{opacity:0;}75%{opacity:1;}95%{opacity:1;}100%{opacity:0;}}
+/* step labels */
+.hs-steps{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:0.8rem;}
+.hs-step{font-family:'DM Mono',monospace;font-size:0.65rem;padding:3px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.25);transition:all 0.3s;}
+.hs-step.active{border-color:var(--gold);color:var(--gold);background:rgba(212,160,57,0.1);}
+
+/* QUIZ */
+.quiz-section{background:var(--paper);}
+#quizProgress{height:4px;background:var(--border);border-radius:2px;margin-bottom:2rem;}
+#quizBar{height:100%;background:var(--gold);border-radius:2px;transition:width 0.4s ease;}
+.q-text{font-size:1.05rem;font-weight:500;margin-bottom:1.2rem;}
+.q-opts{display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1.2rem;}
+.q-opt{background:var(--cream);border:2px solid var(--border);border-radius:4px;padding:0.75rem 1.1rem;cursor:pointer;font-size:0.9rem;transition:border-color .15s,background .15s;text-align:left;}
+.q-opt:hover{border-color:var(--gold);background:rgba(212,160,57,0.06);}
+.q-opt.correct{border-color:var(--green);background:var(--green-light);color:var(--green);}
+.q-opt.wrong{border-color:var(--rust);background:rgba(201,74,42,0.08);color:var(--rust);}
+.q-feedback{font-size:0.85rem;padding:0.8rem 1rem;border-radius:3px;margin-bottom:1rem;display:none;}
+.q-feedback.show{display:block;}
+.q-feedback.ok{background:var(--green-light);color:var(--green);border:1px solid rgba(42,107,58,0.2);}
+.q-feedback.bad{background:rgba(201,74,42,0.08);color:var(--rust);border:1px solid rgba(201,74,42,0.2);}
+.q-next{background:var(--ink);color:#fff;border:none;padding:0.6rem 1.6rem;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;border-radius:3px;cursor:pointer;display:none;}
+.q-next.show{display:inline-block;}
+#quizScore{font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--gold);letter-spacing:2px;}
+.restart-btn{background:var(--gold);color:var(--ink);border:none;padding:0.6rem 1.6rem;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;border-radius:3px;cursor:pointer;margin-top:1rem;}
+
+footer{background:var(--ink);color:rgba(255,255,255,0.3);padding:2rem 3rem;font-family:'DM Mono',monospace;font-size:0.72rem;text-align:center;letter-spacing:1px;}
+footer strong{color:var(--gold);}
+
+@media(max-width:700px){
+  nav{padding:0 1.2rem;}.nav-links{display:none;}
+  .hero{padding:3rem 1.5rem 2rem;}.section{padding:3rem 1.5rem;}
+  .info-two{grid-template-columns:1fr;}.arp-net{height:220px;}
+}
+</style>
+</head>
+<body>
+<div id="course-navbar">
+  <style>
+    #course-navbar{position:sticky;top:0;z-index:9999;background:#0f1117;border-bottom:3px solid #c94a2a;display:flex;align-items:center;gap:0;height:52px;font-family:'DM Sans',sans-serif;}
+    #course-navbar a{text-decoration:none;}
+    .cnav-home{padding:0 1.2rem;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1.5px;color:#d4a039;white-space:nowrap;height:52px;display:flex;align-items:center;border-right:1px solid rgba(255,255,255,.1);}
+    .cnav-home:hover{background:rgba(212,160,57,.1);}
+    .cnav-module{padding:0 1rem;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:1px;color:rgba(255,255,255,.45);white-space:nowrap;flex:1;}
+    .cnav-module strong{color:#fff;font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:1px;}
+    .cnav-progress{height:3px;background:#c94a2a;width:53%;position:absolute;bottom:0;left:0;}
+    .cnav-arrow{padding:0 1rem;font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:1px;color:rgba(255,255,255,.5);height:52px;display:flex;align-items:center;border-left:1px solid rgba(255,255,255,.1);white-space:nowrap;}
+    .cnav-arrow:hover{color:#fff;background:rgba(255,255,255,.05);}
+    .cnav-next{background:#c94a2a;color:#fff !important;}
+    .cnav-next:hover{background:#a83a1e !important;}
+  </style>
+  <a class="cnav-home" href="index.html">⌂ HOME</a>
+  <div class="cnav-module">MODULE 08 / 15 &nbsp; <strong>ARP PROTOCOL</strong></div>
+  <a class="cnav-arrow" href="module7_icmp-interactive.html">← 7</a>
+  <a class="cnav-arrow cnav-next" href="module9_packet-tracer.html">9 →</a>
+  <div class="cnav-progress"></div>
+</div>
+
+<nav>
+  <div class="nav-brand">NET<span>FUND</span></div>
+  <ul class="nav-links">
+    <li><a href="#what">What is ARP</a></li>
+    <li><a href="#how">How it Works</a></li>
+    <li><a href="#packet">Packet Detail</a></li>
+    <li><a href="#cache">ARP Cache</a></li>
+    <li><a href="#cmd">Commands</a></li>
+    <li><a href="#quiz">Quiz</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-kicker">// Layer 2 / Layer 3 Bridge · Network Fundamentals EP.7</div>
+  <h1>ADDRESS<br>RESOLUTION<br><em>PROTOCOL</em></h1>
+  <p class="hero-sub">ARP translates a known IP address into a MAC address — bridging Layer 3 (IP) and Layer 2 (Ethernet) so that a Switch can forward frames to the correct physical port.</p>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────
+     01  WHAT IS ARP
+     ───────────────────────────────────────────────────────────── -->
+<section class="section" id="what" style="background:var(--paper);">
+<div class="section-inner">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div>
+      <div class="section-tag">// Slide 3 — Definition</div>
+      <h2 class="section-title">WHAT IS ARP?</h2>
+    </div>
+  </div>
+
+  <p class="lead">When PC 1 wants to send data to 192.168.1.100, it hands the frame to a Switch. The Switch operates at <strong>Layer 2 and works only with MAC addresses</strong> — not IP. ARP is the protocol that finds the MAC address that belongs to a given IP address, so Layer 2 forwarding can happen.</p>
+
+  <div class="concept-grid">
+    <div class="concept-card">
+      <div class="concept-card-head" style="background:var(--blue);">THE PROBLEM</div>
+      <div class="concept-card-body">PC 1 knows the destination IP (e.g. <strong>192.168.1.100</strong>) but its frame's <strong>Destination MAC field is empty (?????.?????.?????)</strong>. Without a MAC address the Switch cannot forward the frame.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-card-head" style="background:var(--gold);color:var(--ink);">THE SOLUTION</div>
+      <div class="concept-card-body">ARP sends a <strong>broadcast</strong> — "Who has 192.168.1.100? Tell me your MAC!" — and the owner replies with its MAC. PC 1 can then fill in the Ethernet header and send the actual data.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-card-head" style="background:var(--green);">THE RESULT</div>
+      <div class="concept-card-body">The IP↔MAC mapping is stored in the <strong>ARP Cache</strong> on the PC. Future packets to the same IP skip the broadcast entirely — the Switch just forwards.</div>
+    </div>
+  </div>
+
+  <!-- Analogy from slide 4 -->
+  <div style="background:var(--cream);border:1px solid var(--border);border-radius:4px;padding:1.4rem 1.8rem;margin-top:1.5rem;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--rust);margin-bottom:0.7rem;">💡 REAL-WORLD ANALOGY (from the video)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;font-size:0.87rem;color:var(--muted);">
+      <div>
+        <strong style="color:var(--ink);">Nickname (IP address)</strong><br>
+        Everyone knows you as "Bee" — but the Switch (postal system) can only deliver using your <em>real full name</em>.
+      </div>
+      <div>
+        <strong style="color:var(--ink);">Full Name (MAC address)</strong><br>
+        ARP asks the whole room: <em>"Hey — Bee! What's your full name?"</em> Bee (192.168.1.100) replies with its full name (CCCC.CCCC.CCCC) and the Switch can now deliver the letter.
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────
+     02  HOW ARP WORKS  +  GIF 1 & GIF 3
+     ───────────────────────────────────────────────────────────── -->
+<section class="section" id="how" style="background:var(--ink);">
+<div class="section-inner">
+  <div class="section-header">
+    <div class="section-num" style="color:rgba(255,255,255,0.04);">02</div>
+    <div>
+      <div class="section-tag">// Slides 5–8 — ARP Request & Reply</div>
+      <h2 class="section-title" style="color:var(--paper);">HOW ARP WORKS</h2>
+    </div>
+  </div>
+
+  <p class="lead">ARP operates in exactly two steps: a <strong style="color:var(--rust);">broadcast Request</strong> sent to every device on the local network, followed by a <strong style="color:#6fd46f;">unicast Reply</strong> sent only back to the requester.</p>
+
+  <!-- GIF 1 – Broadcast Animation -->
+  <div class="gif-wrap">
+    <div class="gif-bar">GIF 1 — ARP BROADCAST: Request floods the LAN, only PC 2 replies</div>
+    <div class="gif-stage">
+      <div class="arp-net">
+        <!-- connector lines -->
+        <div class="arp-line arp-line-l"></div>
+        <div class="arp-line arp-line-r"></div>
+        <!-- broadcast rings — centred on switch at left:50% top:50% -->
+        <div class="bcast-ring"></div>
+        <div class="bcast-ring"></div>
+        <div class="bcast-ring"></div>
+        <!-- moving packets -->
+        <div class="req-pkt">ARP REQ</div>
+        <div class="rep-pkt">ARP REP</div>
+        <!-- PC 1 — left -->
+        <div class="arp-node" id="an-pc1">
+          <div class="arp-icon" style="background:rgba(26,58,107,0.4);border-color:var(--blue);">💻</div>
+          <div>PC 1</div>
+          <div class="arp-ip">192.168.1.40</div>
+          <div class="arp-mac">AAAA.AAAA.AAAA</div>
+        </div>
+        <!-- SWITCH — centre -->
+        <div class="arp-node" id="an-sw">
+          <div class="arp-icon" style="background:rgba(212,160,57,0.15);border-color:var(--gold);">🔀</div>
+          <div>SWITCH</div>
+          <div class="arp-ip">L2 device</div>
+        </div>
+        <!-- PC 2 — right (the ONE host that replies) -->
+        <div class="arp-node" id="an-pc2">
+          <div class="arp-icon" style="background:rgba(42,107,58,0.35);border-color:var(--green);">🖥️</div>
+          <div>PC 2</div>
+          <div class="arp-ip">192.168.1.100</div>
+          <div class="arp-mac">CCCC.CCCC.CCCC</div>
+        </div>
+        <!-- status label -->
+        <div class="arp-label" id="arpLabel">📡 ARP Request: "Who has 192.168.1.100?" → Broadcast FFFF.FFFF.FFFF</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step by step -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:2rem;">
+    <div style="background:rgba(201,74,42,0.08);border:1px solid rgba(201,74,42,0.2);border-radius:4px;padding:1.2rem;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:var(--rust);margin-bottom:0.6rem;">STEP 1 — ARP REQUEST (Broadcast)</div>
+      <ul style="font-size:0.85rem;color:rgba(255,255,255,0.55);padding-left:1.2rem;line-height:1.9;">
+        <li>PC 1 broadcasts to <strong style="color:#fff;">FFFF.FFFF.FFFF</strong> (everyone)</li>
+        <li>"Who has IP <strong style="color:var(--rust);">192.168.1.100</strong>? Tell 192.168.1.40"</li>
+        <li>Switch floods out <em>all</em> ports — every device receives it</li>
+        <li>Only the device with that IP responds</li>
+      </ul>
+    </div>
+    <div style="background:rgba(42,107,58,0.08);border:1px solid rgba(42,107,58,0.2);border-radius:4px;padding:1.2rem;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;color:#6fd46f;margin-bottom:0.6rem;">STEP 2 — ARP REPLY (Unicast)</div>
+      <ul style="font-size:0.85rem;color:rgba(255,255,255,0.55);padding-left:1.2rem;line-height:1.9;">
+        <li>PC 2 replies <em>directly</em> to PC 1 (unicast)</li>
+        <li>"My MAC is <strong style="color:#6fd46f;">CCCC.CCCC.CCCC</strong>"</li>
+        <li>PC 1 stores this in its <strong style="color:#fff;">ARP Cache</strong></li>
+        <li>Data transfer can now begin with correct L2 header</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- GIF 3 – Full Handshake step animation -->
+  <div class="gif-wrap" style="margin-top:2rem;">
+    <div class="gif-bar">GIF 2 — FULL ARP HANDSHAKE: Request → Flood → Reply → Cache</div>
+    <div class="gif-stage">
+      <div class="hs-stage">
+        <div class="hs-pc1">
+          <span class="hs-icon">💻</span>
+          <div class="hs-name">PC 1</div>
+          <div class="hs-addr">192.168.1.40</div>
+          <div class="hs-addr">AAAA.AAAA.AAAA</div>
+        </div>
+        <div class="hs-sw">
+          <span class="hs-icon">🔀</span>
+          <div class="hs-name">SWITCH</div>
+          <div class="hs-addr">Floods broadcast</div>
+        </div>
+        <div class="hs-pc2">
+          <span class="hs-icon">🖥️</span>
+          <div class="hs-name">PC 2</div>
+          <div class="hs-addr">192.168.1.100</div>
+          <div class="hs-addr">CCCC.CCCC.CCCC</div>
+        </div>
+        <!-- arrows -->
+        <div class="hs-req"></div>
+        <div class="hs-flood1"></div>
+        <div class="hs-rep"></div>
+        <!-- step pills -->
+        <div class="hs-steps">
+          <div class="hs-step" id="hs1">1 · Request</div>
+          <div class="hs-step" id="hs2">2 · Flood</div>
+          <div class="hs-step" id="hs3">3 · Reply</div>
+          <div class="hs-step" id="hs4">4 · Cached ✓</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────
+     03  PACKET STRUCTURE
+     ───────────────────────────────────────────────────────────── -->
+<section class="section" id="packet" style="background:var(--paper);">
+<div class="section-inner">
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <div>
+      <div class="section-tag">// Slide 5 & 7 — Frame Fields</div>
+      <h2 class="section-title">ARP PACKET STRUCTURE</h2>
+    </div>
+  </div>
+  <p class="lead">An ARP frame has two layers: the Ethernet header (for L2 delivery) wrapping the ARP payload (the actual question or answer). Here are the exact fields from the video.</p>
+
+  <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:1px;margin-bottom:0.5rem;color:var(--rust);">ARP REQUEST — PC 1 (192.168.1.40) asking for PC 2 (192.168.1.100)</h3>
+  <div class="pkt-wrap">
+    <table class="pkt-table">
+      <thead>
+        <tr>
+          <th class="pkt-th-eth" colspan="2">Ethernet Header</th>
+          <th class="pkt-th-arp" colspan="4">ARP Request Payload</th>
+        </tr>
+        <tr style="background:rgba(0,0,0,0.05);">
+          <th style="background:rgba(26,58,107,0.7);color:#fff;">Dest MAC</th>
+          <th style="background:rgba(26,58,107,0.7);color:#fff;">Src MAC</th>
+          <th style="background:rgba(201,74,42,0.6);color:#fff;">Src MAC</th>
+          <th style="background:rgba(201,74,42,0.6);color:#fff;">Src IP</th>
+          <th style="background:rgba(201,74,42,0.6);color:#fff;">Dest MAC</th>
+          <th style="background:rgba(201,74,42,0.6);color:#fff;">Dest IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="pkt-td-bcast">FFFF.FFFF.FFFF</td>
+          <td class="pkt-td-src">AAAA.AAAA.AAAA</td>
+          <td class="pkt-td-src">AAAA.AAAA.AAAA</td>
+          <td>192.168.1.40</td>
+          <td class="pkt-td-zero">0000.0000.0000</td>
+          <td style="color:var(--rust);font-weight:600;">192.168.1.100</td>
+        </tr>
+        <tr style="background:rgba(0,0,0,0.03);font-size:0.7rem;">
+          <td style="color:var(--rust);">Broadcast — all devices</td>
+          <td style="color:var(--muted);">PC 1's MAC</td>
+          <td style="color:var(--muted);">PC 1's MAC</td>
+          <td style="color:var(--muted);">PC 1's IP</td>
+          <td style="color:var(--muted);">Unknown (asking!)</td>
+          <td style="color:var(--muted);">Target IP</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:1px;margin:1.5rem 0 0.5rem;color:var(--green);">ARP REPLY — PC 2 (192.168.1.100) answering PC 1</h3>
+  <div class="pkt-wrap">
+    <table class="pkt-table">
+      <thead>
+        <tr>
+          <th class="pkt-th-eth" colspan="2">Ethernet Header</th>
+          <th style="background:rgba(42,107,58,0.7);color:#fff;" colspan="4">ARP Reply Payload</th>
+        </tr>
+        <tr>
+          <th style="background:rgba(26,58,107,0.7);color:#fff;">Dest MAC</th>
+          <th style="background:rgba(26,58,107,0.7);color:#fff;">Src MAC</th>
+          <th style="background:rgba(42,107,58,0.6);color:#fff;">Src MAC</th>
+          <th style="background:rgba(42,107,58,0.6);color:#fff;">Src IP</th>
+          <th style="background:rgba(42,107,58,0.6);color:#fff;">Dest MAC</th>
+          <th style="background:rgba(42,107,58,0.6);color:#fff;">Dest IP</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="pkt-td-src">AAAA.AAAA.AAAA</td>
+          <td class="pkt-td-good">CCCC.CCCC.CCCC</td>
+          <td class="pkt-td-good">CCCC.CCCC.CCCC</td>
+          <td style="color:var(--green);font-weight:600;">192.168.1.100</td>
+          <td class="pkt-td-src">AAAA.AAAA.AAAA</td>
+          <td>192.168.1.40</td>
+        </tr>
+        <tr style="background:rgba(0,0,0,0.03);font-size:0.7rem;">
+          <td style="color:var(--muted);">Unicast to PC 1</td>
+          <td style="color:var(--green);">PC 2's MAC (the answer!)</td>
+          <td style="color:var(--green);">PC 2's MAC</td>
+          <td style="color:var(--muted);">PC 2's IP</td>
+          <td style="color:var(--muted);">PC 1's MAC</td>
+          <td style="color:var(--muted);">PC 1's IP</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note-box"><strong>Key difference:</strong> &nbsp; ARP Request = Broadcast (FFFF.FFFF.FFFF) · Destination MAC unknown (0000.0000.0000) &nbsp;|&nbsp; ARP Reply = Unicast · Destination MAC is now known (AAAA.AAAA.AAAA)</div>
+</div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────
+     04  ARP CACHE  +  GIF 2
+     ───────────────────────────────────────────────────────────── -->
+<section class="section" id="cache" style="background:var(--cream);">
+<div class="section-inner">
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <div>
+      <div class="section-tag">// Slide 8 — ARP Table</div>
+      <h2 class="section-title">ARP CACHE</h2>
+    </div>
+  </div>
+
+  <p class="lead">After a successful ARP exchange, the IP↔MAC mapping is stored locally in the <strong>ARP Cache</strong> (also called the ARP Table). Next time the same destination is needed, no broadcast is needed — saving bandwidth and time.</p>
+
+  <!-- GIF 2 – Cache building -->
+  <div class="gif-wrap">
+    <div class="gif-bar">GIF 3 — ARP CACHE BUILDING: Entries populate after each ARP exchange</div>
+    <div class="gif-stage">
+      <div class="cache-anim" id="cacheAnim">
+        <div class="cache-title">ARP CACHE — PC 1 (192.168.1.40)</div>
+        <div style="display:flex;gap:1.5rem;font-family:'Bebas Neue',sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.25);letter-spacing:2px;margin-bottom:0.5rem;padding-bottom:0.5rem;border-bottom:1px solid rgba(255,255,255,0.08);">
+          <span style="width:110px;">INTERNET ADDR</span>
+          <span style="width:16px;"></span>
+          <span style="flex:1;">PHYSICAL (MAC) ADDR</span>
+          <span style="width:55px;">TYPE</span>
+          <span style="width:55px;">TTL</span>
+        </div>
+        <div class="cache-row" id="cr0">
+          <div class="cache-ip">192.168.1.100</div>
+          <div class="cache-arrow">→</div>
+          <div class="cache-mac">CC-CC-CC-CC-CC-CC</div>
+          <div class="cache-type type-dyn">dynamic</div>
+          <div class="cache-timer" id="ttl0">120s</div>
+        </div>
+        <div class="cache-row" id="cr1">
+          <div class="cache-ip">192.168.1.1</div>
+          <div class="cache-arrow">→</div>
+          <div class="cache-mac">18-de-d7-e8-23-07</div>
+          <div class="cache-type type-dyn">dynamic</div>
+          <div class="cache-timer" id="ttl1">98s</div>
+        </div>
+        <div class="cache-row" id="cr2">
+          <div class="cache-ip">192.168.1.135</div>
+          <div class="cache-arrow">→</div>
+          <div class="cache-mac">DD-DD-DD-DD-DD-DD</div>
+          <div class="cache-type type-dyn">dynamic</div>
+          <div class="cache-timer" id="ttl2">55s</div>
+        </div>
+        <div class="cache-row" id="cr3">
+          <div class="cache-ip">192.168.1.255</div>
+          <div class="cache-arrow">→</div>
+          <div class="cache-mac">ff-ff-ff-ff-ff-ff</div>
+          <div class="cache-type type-sta">static</div>
+          <div class="cache-timer">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-two" style="margin-top:1.5rem;">
+    <div class="info-box" style="background:var(--paper);">
+      <h4 style="color:var(--blue);">DYNAMIC ENTRIES</h4>
+      <ul>
+        <li>Created automatically by ARP exchanges</li>
+        <li>Have a <strong>TTL (Time To Live)</strong> — typically 2 minutes on Windows</li>
+        <li>Automatically removed when TTL expires</li>
+        <li>Re-acquired on next communication attempt</li>
+      </ul>
+    </div>
+    <div class="info-box" style="background:var(--paper);">
+      <h4 style="color:var(--gold);">STATIC ENTRIES</h4>
+      <ul>
+        <li>Manually added by an administrator</li>
+        <li>Never expire — permanent until deleted</li>
+        <li>Used for critical devices (e.g. gateway, servers)</li>
+        <li>Added with <code>arp -s &lt;IP&gt; &lt;MAC&gt;</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────
+     05  COMMANDS
+     ───────────────────────────────────────────────────────────── -->
+<section class="section" id="cmd" style="background:var(--ink);">
+<div class="section-inner">
+  <div class="section-header">
+    <div class="section-num" style="color:rgba(255,255,255,0.04);">05</div>
+    <div>
+      <div class="section-tag">// Slide 9 — arp -a</div>
+      <h2 class="section-title" style="color:var(--paper);">ARP COMMANDS</h2>
+    </div>
+  </div>
+
+  <p class="lead">The <code style="color:var(--gold);">arp</code> command lets you inspect and manage the ARP cache directly from any OS terminal.</p>
+
+  <!-- Real terminal output from slide 9 -->
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="term-btn term-close"></div><div class="term-btn term-min"></div><div class="term-btn term-max"></div>
+      <div class="term-title">Command Prompt — arp -a (from the video)</div>
+    </div>
+    <div class="terminal-body">
+      <div class="t-cmd">C:\Users\phornchai.i&gt;arp -a</div>
+      <div class="t-out">&nbsp;</div>
+      <div class="t-out">Interface: <span class="t-hi">192.168.1.7</span> --- 0x7</div>
+      <div class="t-out">&nbsp;&nbsp;Internet Address&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Physical Address&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Type</div>
+      <div><span class="t-hi">  192.168.1.1</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-dyn">18-de-d7-e8-23-07</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-dyn">dynamic</span></div>
+      <div><span class="t-hi">  192.168.1.4</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-dyn">e1-a4-71-ba-f8-88</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-dyn">dynamic</span></div>
+      <div><span class="t-hi">  192.168.1.255</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-sta">ff-ff-ff-ff-ff-ff</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-sta">static</span></div>
+      <div><span class="t-hi">  224.0.0.22</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-sta">01-00-5e-00-00-16</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-sta">static</span></div>
+      <div><span class="t-hi">  255.255.255.255</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-sta">ff-ff-ff-ff-ff-ff</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-sta">static</span></div>
+      <div class="t-out">&nbsp;</div>
+      <div class="t-out"><!-- simulating the lab result from slide 9 --></div>
+      <div class="t-out">D:\&gt;arp -a</div>
+      <div class="t-out">&nbsp;&nbsp;Internet Address&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Physical Address&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Type</div>
+      <div><span class="t-hi">  192.168.1.100</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-dyn">CC-CC-CC-CC-CC-CC</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-dyn">dynamic</span></div>
+      <div class="t-out">&nbsp;</div>
+      <div><span class="t-cmd">C:\Users\phornchai.i&gt;</span><span class="t-cursor"></span></div>
+    </div>
+  </div>
+
+  <!-- Command reference grid -->
+  <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:1px;color:var(--paper);margin:1.8rem 0 1rem;">COMMAND REFERENCE</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0.8rem;">
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:3px;padding:1rem;">
+      <div style="font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--gold);margin-bottom:0.4rem;">arp -a</div>
+      <div style="font-size:0.82rem;color:rgba(255,255,255,0.5);">Display the full ARP cache (all interfaces)</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:3px;padding:1rem;">
+      <div style="font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--gold);margin-bottom:0.4rem;">arp -d *</div>
+      <div style="font-size:0.82rem;color:rgba(255,255,255,0.5);">Delete all dynamic ARP cache entries (Windows)</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:3px;padding:1rem;">
+      <div style="font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--gold);margin-bottom:0.4rem;">arp -s &lt;IP&gt; &lt;MAC&gt;</div>
+      <div style="font-size:0.82rem;color:rgba(255,255,255,0.5);">Add a static ARP entry manually</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:3px;padding:1rem;">
+      <div style="font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--gold);margin-bottom:0.4rem;">arp -d &lt;IP&gt;</div>
+      <div style="font-size:0.82rem;color:rgba(255,255,255,0.5);">Remove a specific entry from the cache</div>
+    </div>
+  </div>
+
+  <div class="note-box" style="margin-top:1.5rem;background:rgba(255,255,255,0.04);border-left-color:var(--gold);">
+    <strong>What the Switch learns:</strong> &nbsp; While the PC uses ARP to learn MAC→IP mappings, the Switch builds its own <strong>MAC Address Table</strong> — it records which port each MAC arrived on (PC → MAC → Switch port). The Switch does NOT need ARP; it learns purely from incoming frames.
+  </div>
+</div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────────
+     06  QUIZ
+     ───────────────────────────────────────────────────────────── -->
+<section class="section quiz-section" id="quiz">
+<div class="section-inner" style="max-width:720px;">
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <div>
+      <div class="section-tag">// Test Your Knowledge</div>
+      <h2 class="section-title">QUIZ</h2>
+    </div>
+  </div>
+  <div id="quizProgress"><div id="quizBar" style="width:0%"></div></div>
+  <div id="quizArea">
+    <div class="q-text" id="qText"></div>
+    <div class="q-opts" id="qOpts"></div>
+    <div class="q-feedback" id="qFeedback"></div>
+    <button class="q-next" id="qNext" onclick="nextQ()">NEXT →</button>
+  </div>
+  <div id="quizResult" style="display:none;text-align:center;padding:2rem 0;">
+    <div id="quizScore"></div>
+    <div id="quizMsg" style="color:var(--muted);font-size:0.9rem;margin-top:0.5rem;"></div>
+    <button class="restart-btn" onclick="startQuiz()">↺ TRY AGAIN</button>
+  </div>
+</div>
+</section>
+
+<footer>
+  <strong>ARP</strong> — Address Resolution Protocol &nbsp;·&nbsp; Layer 2 / Layer 3 &nbsp;·&nbsp; Network Fundamentals Series &nbsp;·&nbsp; ninehua.com
+</footer>
+
+<script>
+/* ===== GIF 1 label cycling — synced with 6s animation ===== */
+const lbl = document.getElementById('arpLabel');
+const msgs = [
+  '📡 ARP Request: "Who has 192.168.1.100?" → Broadcast FFFF.FFFF.FFFF',
+  '🔀 Switch floods broadcast — all devices receive it...',
+  '✅ PC 2 replies: "My MAC is CCCC.CCCC.CCCC" → Unicast back to PC 1'
+];
+const colors = ['rgba(201,74,42,0.9)', 'rgba(212,160,57,0.9)', 'rgba(42,107,58,0.9)'];
+let mi = 0;
+setInterval(()=>{ mi=(mi+1)%msgs.length; lbl.textContent=msgs[mi]; lbl.style.color=colors[mi]; }, 2000);
+
+/* ===== GIF 2 step pills ===== */
+const pills=['hs1','hs2','hs3','hs4'];
+let pi=0;
+const durations=[1200,1000,1600,1200];
+function advancePill(){
+  pills.forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById(pills[pi]).classList.add('active');
+  setTimeout(()=>{ pi=(pi+1)%pills.length; advancePill(); },durations[pi]||1200);
+}
+advancePill();
+
+/* ===== GIF 3 cache rows appear one by one ===== */
+const rows=['cr0','cr1','cr2','cr3'];
+let ri=0;
+function showNextRow(){
+  if(ri<rows.length){
+    const r=document.getElementById(rows[ri]);
+    if(r){r.classList.add('show');}
+    ri++;
+    setTimeout(showNextRow,900);
+  } else {
+    // start TTL countdown
+    startTTL();
+  }
+}
+setTimeout(showNextRow,600);
+
+function startTTL(){
+  let t0=120,t1=98,t2=55;
+  setInterval(()=>{
+    if(t0>0){t0--;document.getElementById('ttl0').textContent=t0+'s';}
+    if(t1>0){t1--;document.getElementById('ttl1').textContent=t1+'s';}
+    if(t2>0){t2--;document.getElementById('ttl2').textContent=t2+'s';}
+    if(t0===0)document.getElementById('ttl0').style.color='var(--rust)';
+    if(t1===0)document.getElementById('ttl1').style.color='var(--rust)';
+    if(t2===0)document.getElementById('ttl2').style.color='var(--rust)';
+  },1000);
+}
+
+/* ===== QUIZ ===== */
+const questions=[
+  {q:"What does ARP stand for?",opts:["Address Routing Protocol","Address Resolution Protocol","Automatic Reply Protocol","Advanced Route Protocol"],a:1,exp:"ARP = Address Resolution Protocol. It resolves (finds) a MAC address for a known IP address."},
+  {q:"What information does PC 1 know BEFORE sending an ARP Request?",opts:["Destination MAC address only","Both destination IP and MAC","Destination IP address only","Neither IP nor MAC"],a:2,exp:"PC 1 knows the destination IP (e.g. from a ping command) but NOT the MAC. ARP is needed to find the MAC."},
+  {q:"An ARP Request is sent to which destination MAC address?",opts:["AAAA.AAAA.AAAA (PC 1's own MAC)","CCCC.CCCC.CCCC (target MAC)","FFFF.FFFF.FFFF (broadcast)","0000.0000.0000 (unknown)"],a:2,exp:"ARP Requests use the broadcast address FFFF.FFFF.FFFF so every device on the LAN receives the question."},
+  {q:"In an ARP Request packet, what value is placed in the 'Destination MAC' field of the ARP payload?",opts:["FFFF.FFFF.FFFF","The sender's MAC","0000.0000.0000 — unknown","The gateway's MAC"],a:2,exp:"Inside the ARP payload, the target MAC is 0000.0000.0000 because it's unknown — that's exactly what ARP is trying to find."},
+  {q:"Which device in a LAN responds to an ARP Request for IP 192.168.1.100?",opts:["All devices on the LAN","Only the Switch","Only the device that owns IP 192.168.1.100","The Default Gateway always responds"],a:2,exp:"Every device receives the broadcast, but only the device whose IP matches (192.168.1.100) sends back an ARP Reply."},
+  {q:"ARP Reply is sent as which type of transmission?",opts:["Broadcast — to FFFF.FFFF.FFFF","Unicast — directly to the requester","Multicast — to a group","Anycast — to the nearest device"],a:1,exp:"The ARP Reply is a unicast — sent specifically to the MAC of the device that asked (e.g. AAAA.AAAA.AAAA). No need to broadcast the answer."},
+  {q:"What command displays the ARP cache on a Windows PC?",opts:["ipconfig /arp","arp -a","netstat -arp","show arp"],a:1,exp:"'arp -a' lists all current ARP cache entries, showing Internet Address → Physical (MAC) Address → Type (dynamic/static)."},
+  {q:"What is a 'dynamic' ARP cache entry?",opts:["Manually added by an admin, never expires","Automatically learned via ARP, expires after ~2 minutes","A static route in the routing table","An entry shared across all switches"],a:1,exp:"Dynamic entries are automatically created by the ARP process. They expire (TTL ~120s on Windows) and must be re-learned if the device communicates again."},
+  {q:"Why does ARP only work within a single subnet (LAN)?",opts:["ARP packets use IP routing and can cross routers","Broadcasts are limited to the local broadcast domain — routers do not forward them","ARP uses TCP which is blocked by firewalls","ARP requires IPv6 to cross networks"],a:1,exp:"Broadcasts (FFFF.FFFF.FFFF) are stopped at router boundaries. So ARP only works within one broadcast domain / subnet. Communication to other networks goes through the gateway."},
+  {q:"After a successful ARP exchange, PC 1 sends actual data to PC 2. What does the Ethernet frame's Destination MAC field now contain?",opts:["FFFF.FFFF.FFFF (still broadcast)","0000.0000.0000 (unknown)","CCCC.CCCC.CCCC (PC 2's real MAC — learned via ARP)","The gateway MAC"],a:2,exp:"Once ARP supplies the MAC, PC 1 fills in the real Destination MAC (CCCC.CCCC.CCCC). The Switch can now forward the frame to the correct port without broadcasting."},
+];
+
+let qIdx=0,score=0,answered=false;
+function startQuiz(){
+  qIdx=0;score=0;answered=false;
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('quizResult').style.display='none';
+  renderQ();
+}
+function renderQ(){
+  answered=false;
+  const q=questions[qIdx];
+  document.getElementById('quizBar').style.width=(qIdx/questions.length*100)+'%';
+  document.getElementById('qText').textContent=`Q${qIdx+1}/${questions.length} — ${q.q}`;
+  const opts=document.getElementById('qOpts');opts.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const b=document.createElement('button');b.className='q-opt';b.textContent=o;
+    b.onclick=()=>selectAnswer(i);opts.appendChild(b);
+  });
+  document.getElementById('qFeedback').className='q-feedback';
+  document.getElementById('qFeedback').textContent='';
+  document.getElementById('qNext').className='q-next';
+}
+function selectAnswer(idx){
+  if(answered)return;answered=true;
+  const q=questions[qIdx];
+  document.querySelectorAll('.q-opt').forEach((b,i)=>{
+    b.style.pointerEvents='none';
+    if(i===q.a)b.classList.add('correct');
+    else if(i===idx&&idx!==q.a)b.classList.add('wrong');
+  });
+  const fb=document.getElementById('qFeedback');
+  if(idx===q.a){score++;fb.className='q-feedback ok show';fb.textContent='✓ Correct! '+q.exp;}
+  else{fb.className='q-feedback bad show';fb.textContent='✗ '+q.exp;}
+  document.getElementById('qNext').className='q-next show';
+}
+function nextQ(){
+  qIdx++;
+  if(qIdx>=questions.length){
+    document.getElementById('quizArea').style.display='none';
+    document.getElementById('quizResult').style.display='block';
+    document.getElementById('quizBar').style.width='100%';
+    document.getElementById('quizScore').textContent=score+' / '+questions.length;
+    const pct=score/questions.length;
+    const m=['Keep at it — review the sections above!','Good effort, a few gaps to fill.','Solid! You understand ARP well.','Excellent! Strong ARP knowledge.','Perfect score! ARP mastered.'];
+    document.getElementById('quizMsg').textContent=m[Math.min(4,Math.floor(pct*5))];
+  }else{renderQ();}
+}
+startQuiz();
+</script>
+</body>
+</html>

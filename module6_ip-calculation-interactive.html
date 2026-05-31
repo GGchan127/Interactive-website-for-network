@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IP Address Calculation — Network Fundamentals</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:#0f1117; --paper:#f5f2eb; --cream:#ede9df; --rust:#c94a2a; --rust-light:#f0604040;
+    --blue:#1a3a6b; --blue-light:#e8eef8; --gold:#d4a039; --green:#2a6b3a; --green-light:#e8f5eb;
+    --muted:#6b6560; --border:#d0cab8;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { background:var(--paper); color:var(--ink); font-family:'DM Sans',sans-serif; line-height:1.7; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; opacity:0.025; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"); pointer-events:none; z-index:1000; }
+
+  nav { position:sticky; top:0; z-index:100; background:var(--ink); color:var(--paper); display:flex; align-items:center; justify-content:space-between; padding:0 3rem; height:56px; border-bottom:3px solid var(--rust); }
+  .nav-brand { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:2px; }
+  .nav-brand span { color:var(--rust); }
+  .nav-links { display:flex; gap:1.4rem; list-style:none; }
+  .nav-links a { color:#aaa; text-decoration:none; font-size:0.78rem; font-weight:500; letter-spacing:1px; text-transform:uppercase; transition:color 0.2s; }
+  .nav-links a:hover { color:var(--rust); }
+
+  .hero { background:var(--ink); color:var(--paper); padding:5rem 3rem 4rem; position:relative; overflow:hidden; }
+  .hero::after { content:'IPv4'; position:absolute; right:40px; top:50%; transform:translateY(-50%); font-family:'Bebas Neue',sans-serif; font-size:13rem; color:rgba(255,255,255,0.03); letter-spacing:6px; pointer-events:none; }
+  .hero-kicker { font-family:'DM Mono',monospace; font-size:0.75rem; color:var(--rust); letter-spacing:3px; text-transform:uppercase; margin-bottom:1rem; opacity:0; animation:slideIn 0.6s ease forwards 0.2s; }
+  .hero h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(3rem,8vw,6rem); line-height:0.95; letter-spacing:2px; max-width:820px; opacity:0; animation:slideIn 0.7s ease forwards 0.4s; }
+  .hero h1 em { font-style:normal; color:var(--rust); }
+  .hero-body { margin-top:2rem; max-width:600px; color:#9a9590; font-size:1rem; font-weight:300; opacity:0; animation:slideIn 0.7s ease forwards 0.6s; }
+  .hero-meta { margin-top:2.5rem; display:flex; gap:2rem; flex-wrap:wrap; opacity:0; animation:slideIn 0.7s ease forwards 0.8s; }
+  .hero-stat { border-left:2px solid var(--rust); padding-left:1rem; }
+  .hero-stat-num { font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--paper); line-height:1; }
+  .hero-stat-label { font-size:0.75rem; color:#666; letter-spacing:1px; text-transform:uppercase; }
+  @keyframes slideIn { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+
+  .section { padding:5rem 3rem; border-bottom:1px solid var(--border); }
+  .section-inner { max-width:1100px; margin:0 auto; }
+  .section-header { display:flex; align-items:baseline; gap:1.5rem; margin-bottom:3rem; }
+  .section-num { font-family:'Bebas Neue',sans-serif; font-size:4rem; color:var(--border); line-height:1; flex-shrink:0; }
+  .section-tag { font-family:'DM Mono',monospace; font-size:0.7rem; color:var(--rust); letter-spacing:2px; text-transform:uppercase; margin-bottom:0.3rem; }
+  .section-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(2rem,5vw,3.5rem); letter-spacing:1px; line-height:1; color:var(--ink); }
+  .lead { color:var(--muted); max-width:720px; margin-bottom:1.5rem; font-size:0.95rem; }
+  .lead strong { color:var(--ink); }
+
+  .gif-container { background:var(--paper); border:2px solid var(--border); border-radius:6px; overflow:hidden; margin:1.5rem 0; }
+  .gif-title { background:var(--ink); color:var(--gold); padding:0.5rem 1rem; font-family:'Bebas Neue',sans-serif; font-size:0.88rem; letter-spacing:2px; display:flex; align-items:center; gap:0.5rem; }
+  .gif-title::before { content:'▶'; color:var(--rust); font-size:0.7rem; }
+  .gif-stage { padding:1.5rem; }
+
+  /* CHART (decimal/binary) */
+  .conv-chart { width:100%; border-collapse:collapse; border:1px solid var(--border); font-family:'DM Mono',monospace; }
+  .conv-chart th,.conv-chart td { padding:0.55rem 0.4rem; text-align:center; border:1px solid var(--border); font-size:0.82rem; }
+  .conv-chart thead th { background:var(--blue); color:#fff; font-family:'Bebas Neue',sans-serif; letter-spacing:1px; font-size:0.9rem; }
+  .conv-chart .weight-row td { background:var(--cream); font-weight:700; color:var(--ink); }
+  .conv-chart .dec-col { background:var(--rust); color:#fff; font-family:'Bebas Neue',sans-serif; font-size:1.1rem; }
+  .conv-chart .bin-col { background:var(--gold); color:var(--ink); font-weight:700; letter-spacing:2px; }
+  .conv-chart td.on { background:var(--blue-light); color:var(--blue); font-weight:700; }
+  .conv-chart td.off { color:var(--border); }
+
+  /* BITS */
+  .bit { display:inline-block; width:15px; height:15px; line-height:15px; border-radius:2px; font-size:0.65rem; font-weight:700; margin:1px; text-align:center; }
+  .bit-1 { background:var(--blue); color:#fff; }
+  .bit-0 { background:var(--border); color:var(--muted); }
+
+  /* CALCULATOR */
+  .calc-section { background:var(--ink); }
+  .calc-section .section-title { color:var(--paper); }
+  .calc-section .section-tag { color:var(--gold); }
+  .calc-section .section-num { color:rgba(255,255,255,0.06); }
+  .calc-section .lead { color:#9a9590; }
+  .calc-section .lead strong { color:#fff; }
+  .calc-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:2rem; }
+  .calc-input-row { display:flex; gap:0.8rem; align-items:flex-end; flex-wrap:wrap; margin-bottom:1.5rem; }
+  .calc-field { display:flex; flex-direction:column; gap:0.4rem; }
+  .calc-label { font-family:'DM Mono',monospace; font-size:0.7rem; color:rgba(255,255,255,0.5); letter-spacing:1px; text-transform:uppercase; }
+  .calc-input { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); border-radius:3px; color:#fff; padding:0.6rem 0.9rem; font-family:'DM Mono',monospace; font-size:1rem; width:72px; outline:none; transition:border-color 0.2s; text-align:center; }
+  .calc-input.prefix { width:64px; }
+  .calc-input:focus { border-color:var(--rust); }
+  .calc-sep { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; color:var(--rust); padding-bottom:0.3rem; }
+  .calc-btn { background:var(--rust); color:#fff; border:none; padding:0.65rem 1.8rem; font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:2px; border-radius:3px; cursor:pointer; transition:opacity 0.2s; white-space:nowrap; }
+  .calc-btn:hover { opacity:0.85; }
+  .calc-btn.secondary { background:var(--muted); }
+  .calc-btn.mini { font-size:0.8rem; padding:0.4rem 1rem; letter-spacing:1px; }
+  .calc-result { display:none; margin-top:1.5rem; }
+  .calc-result.show { display:block; animation:slideIn 0.5s ease; }
+  .result-rows { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+  .result-item { padding:1rem; background:rgba(255,255,255,0.04); border-radius:3px; border-left:3px solid var(--rust); }
+  .result-item-label { font-family:'DM Mono',monospace; font-size:0.62rem; color:rgba(255,255,255,0.4); letter-spacing:2px; text-transform:uppercase; margin-bottom:0.4rem; }
+  .result-item-val { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:1px; color:#fff; }
+  .result-item-val.net-col { color:#7eb3ff; }
+  .result-item-val.host-col { color:var(--gold); }
+  .result-item-val.bcast-col { color:#ff8a6a; }
+  .result-item-val.ok { color:#6fd46f; }
+  .calc-error { color:#ff8a6a; font-family:'DM Mono',monospace; font-size:0.82rem; margin-top:0.5rem; display:none; }
+  .calc-error.show { display:block; }
+  .quick-fills { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem; }
+  .quick-fill { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#cfc8bf; font-family:'DM Mono',monospace; font-size:0.74rem; padding:0.35rem 0.7rem; border-radius:3px; cursor:pointer; transition:all 0.2s; }
+  .quick-fill:hover { border-color:var(--rust); color:#fff; }
+
+  /* binary breakdown table inside calc */
+  .bin-breakdown { width:100%; border-collapse:collapse; font-family:'DM Mono',monospace; font-size:0.74rem; margin-top:0.5rem; }
+  .bin-breakdown td,.bin-breakdown th { padding:0.45rem 0.6rem; text-align:left; border-bottom:1px solid rgba(255,255,255,0.08); }
+  .bin-breakdown th { font-family:'Bebas Neue',sans-serif; letter-spacing:1px; color:rgba(255,255,255,0.55); font-size:0.85rem; text-transform:uppercase; }
+  .bin-breakdown .bb-label { color:rgba(255,255,255,0.6); white-space:nowrap; }
+  .bin-breakdown .bb-dec { color:#fff; font-weight:500; white-space:nowrap; }
+  .bin-breakdown .bb-bin { letter-spacing:1px; }
+  .bin-breakdown .bb-ip { color:#7eb3ff; }
+  .bin-breakdown .bb-mask { color:#6fd46f; }
+  .bin-breakdown .bb-net { color:#ff8a6a; }
+  .net-part { color:#7eb3ff; }
+  .host-part { color:var(--gold); }
+
+  /* DEFAULT MASKS / REFERENCE TABLE */
+  .ref-section { background:var(--cream); }
+  .mask-table { width:100%; border-collapse:collapse; border:1px solid var(--border); }
+  .mask-table th { background:var(--ink); color:#fff; font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:2px; padding:0.8rem 1rem; text-align:left; }
+  .mask-table td { padding:0.7rem 1rem; font-size:0.84rem; border-bottom:1px solid var(--border); font-family:'DM Mono',monospace; }
+  .mask-table tr:nth-child(even) td { background:rgba(0,0,0,0.03); }
+  .mask-table .prefix { color:var(--rust); font-weight:600; }
+  .mask-table .hosts { color:var(--blue); font-weight:600; }
+
+  /* STEPS */
+  .steps-grid { display:grid; gap:1rem; }
+  .step-card { display:grid; grid-template-columns:auto 1fr; gap:1.2rem; background:var(--paper); border:1px solid var(--border); border-left:3px solid var(--rust); border-radius:4px; padding:1.2rem 1.4rem; align-items:start; }
+  .step-num { font-family:'Bebas Neue',sans-serif; font-size:2.4rem; color:var(--rust); line-height:0.8; }
+  .step-card h4 { font-family:'Bebas Neue',sans-serif; font-size:1.15rem; letter-spacing:1px; color:var(--ink); margin-bottom:0.3rem; }
+  .step-card p { font-size:0.86rem; color:var(--muted); }
+  .step-card code { font-family:'DM Mono',monospace; background:var(--cream); color:var(--rust); padding:0.1rem 0.4rem; border-radius:2px; font-size:0.8rem; }
+
+  /* FORMULA */
+  .formula-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.2rem; margin:1.5rem 0; }
+  .formula-card { background:var(--paper); border:1px solid var(--border); padding:1.2rem; border-radius:3px; }
+  .formula-card h5 { font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:2px; color:var(--blue); margin-bottom:0.5rem; }
+  .formula { font-family:'DM Mono',monospace; font-size:1rem; color:var(--rust); background:var(--cream); padding:0.4rem 0.8rem; border-radius:3px; display:inline-block; }
+  .formula-card p { font-size:0.82rem; color:var(--muted); margin-top:0.5rem; }
+  .formula-card strong { color:var(--ink); }
+
+  .note-box { font-family:'DM Mono',monospace; font-size:0.78rem; color:var(--muted); padding:0.8rem 1rem; background:var(--paper); border:1px solid var(--border); border-left:3px solid var(--gold); border-radius:2px; margin:1rem 0; }
+  .note-box strong { color:var(--rust); }
+
+  /* WORKED EXAMPLE */
+  .example-tabs { background:var(--paper); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+  .tab-nav { display:flex; gap:0; border-bottom:2px solid var(--border); flex-wrap:wrap; background:var(--cream); }
+  .tab-btn { padding:0.7rem 1.4rem; font-family:'Bebas Neue',sans-serif; font-size:0.95rem; letter-spacing:1px; cursor:pointer; border:none; background:none; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.2s; }
+  .tab-btn.active { color:var(--rust); border-bottom-color:var(--rust); background:var(--paper); }
+  .tab-pane { display:none; padding:1.8rem; }
+  .tab-pane.active { display:block; animation:slideIn 0.4s ease; }
+  .ex-given { font-family:'DM Mono',monospace; font-size:0.95rem; color:var(--ink); background:var(--cream); padding:0.7rem 1rem; border-radius:3px; margin-bottom:1.4rem; border-left:3px solid var(--blue); }
+  .ex-given b { color:var(--rust); }
+  .ex-bin { font-family:'DM Mono',monospace; font-size:0.78rem; overflow-x:auto; margin-bottom:1.4rem; }
+  .ex-bin table { border-collapse:collapse; width:100%; min-width:520px; }
+  .ex-bin td,.ex-bin th { padding:0.4rem 0.6rem; border-bottom:1px solid var(--border); white-space:nowrap; }
+  .ex-bin th { font-family:'Bebas Neue',sans-serif; letter-spacing:1px; color:var(--muted); text-align:left; font-size:0.85rem; }
+  .ex-bin .rl { font-family:'Bebas Neue',sans-serif; letter-spacing:1px; font-size:0.85rem; }
+  .ex-bin .ip-r { color:var(--blue); }
+  .ex-bin .mask-r { color:var(--green); }
+  .ex-bin .net-r td { color:var(--rust); font-weight:600; background:rgba(201,74,42,0.07); }
+  .ex-result-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:0.8rem; }
+  .ex-res { background:var(--cream); border-radius:3px; padding:0.8rem; text-align:center; border-top:2px solid var(--border); }
+  .ex-res .l { font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:0.3rem; }
+  .ex-res .v { font-family:'Bebas Neue',sans-serif; font-size:1.25rem; letter-spacing:0.5px; color:var(--ink); }
+  .ex-res.net .v { color:var(--blue); } .ex-res.net { border-top-color:var(--blue); }
+  .ex-res.bcast .v { color:var(--rust); } .ex-res.bcast { border-top-color:var(--rust); }
+  .ex-res.host .v { color:#9c701f; } .ex-res.host { border-top-color:var(--gold); }
+
+  /* QUIZ */
+  .quiz-section { background:var(--cream); }
+  .quiz-container { max-width:720px; }
+  .quiz-progress-bar { height:3px; background:rgba(0,0,0,0.08); border-radius:2px; margin-bottom:2.5rem; overflow:hidden; }
+  .quiz-progress-fill { height:100%; background:var(--rust); transition:width 0.4s ease; }
+  .quiz-q-label { font-family:'DM Mono',monospace; font-size:0.7rem; color:var(--rust); letter-spacing:2px; text-transform:uppercase; margin-bottom:0.8rem; }
+  .quiz-question { font-size:1.12rem; font-weight:500; margin-bottom:1.6rem; line-height:1.5; color:var(--ink); }
+  .quiz-question code { font-family:'DM Mono',monospace; background:var(--paper); border:1px solid var(--border); color:var(--rust); padding:0.1rem 0.4rem; border-radius:2px; font-size:0.92rem; }
+  .quiz-options { display:flex; flex-direction:column; gap:0.7rem; margin-bottom:1.5rem; }
+  .quiz-opt { padding:1rem 1.3rem; border:1px solid var(--border); border-radius:2px; cursor:pointer; font-size:0.9rem; color:var(--ink); background:var(--paper); text-align:left; transition:all 0.2s; display:flex; gap:0.8rem; align-items:center; font-family:inherit; }
+  .quiz-opt:hover:not(:disabled) { border-color:var(--rust); background:var(--rust-light); }
+  .quiz-opt:disabled { cursor:default; }
+  .quiz-opt.correct { border-color:var(--green); background:var(--green-light); color:var(--green); }
+  .quiz-opt.wrong { border-color:var(--rust); background:var(--rust-light); color:var(--rust); }
+  .opt-letter { font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:1px; color:var(--muted); flex-shrink:0; width:20px; }
+  .quiz-opt.correct .opt-letter { color:var(--green); }
+  .quiz-opt.wrong .opt-letter { color:var(--rust); }
+  .quiz-feedback { padding:0.8rem 1rem; border-radius:2px; font-size:0.86rem; display:none; margin-bottom:1.2rem; line-height:1.5; }
+  .quiz-feedback.show { display:block; }
+  .quiz-feedback.ok { background:var(--green-light); color:var(--green); border-left:3px solid var(--green); }
+  .quiz-feedback.bad { background:var(--rust-light); color:var(--rust); border-left:3px solid var(--rust); }
+  .quiz-actions { display:flex; align-items:center; gap:1rem; }
+  .btn-quiz { background:var(--rust); color:#fff; border:none; padding:0.7rem 1.8rem; font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:1.5px; cursor:pointer; border-radius:2px; transition:opacity 0.2s; display:none; }
+  .btn-quiz:hover { opacity:0.85; }
+  .quiz-score { font-family:'DM Mono',monospace; font-size:0.8rem; color:var(--muted); margin-left:auto; }
+  .quiz-result { display:none; text-align:center; padding:3rem 0; }
+  .quiz-result h3 { font-family:'Bebas Neue',sans-serif; font-size:3rem; letter-spacing:1px; color:var(--rust); }
+  .quiz-result .score-big { font-family:'Bebas Neue',sans-serif; font-size:5rem; color:var(--ink); line-height:1; margin:1rem 0; }
+  .quiz-result p { color:var(--muted); margin-bottom:1.5rem; }
+
+  /* DIAGRAM */
+  .netdiagram { background:var(--ink); }
+  .netdiagram .section-title { color:var(--paper); }
+  .netdiagram .section-tag { color:var(--gold); }
+  .netdiagram .section-num { color:rgba(255,255,255,0.06); }
+  .netdiagram .lead { color:#9a9590; }
+  .netdiagram .lead strong { color:#fff; }
+  .diagram-wrap { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:1.5rem; overflow-x:auto; }
+
+  footer { background:var(--ink); color:#888; padding:2.5rem 3rem; text-align:center; font-family:'DM Mono',monospace; font-size:0.78rem; letter-spacing:1px; }
+  footer span { color:var(--rust); }
+
+  @media (max-width:760px){
+    nav { padding:0 1.2rem; } .nav-links { display:none; }
+    .section { padding:3rem 1.2rem; } .hero { padding:3.5rem 1.2rem 3rem; }
+    .section-header { gap:0.8rem; } .section-num { font-size:2.6rem; }
+    .ex-result-grid { grid-template-columns:repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+<div id="course-navbar">
+  <style>
+    #course-navbar{position:sticky;top:0;z-index:9999;background:#0f1117;border-bottom:3px solid #c94a2a;display:flex;align-items:center;gap:0;height:52px;font-family:'DM Sans',sans-serif;}
+    #course-navbar a{text-decoration:none;}
+    .cnav-home{padding:0 1.2rem;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1.5px;color:#d4a039;white-space:nowrap;height:52px;display:flex;align-items:center;border-right:1px solid rgba(255,255,255,.1);}
+    .cnav-home:hover{background:rgba(212,160,57,.1);}
+    .cnav-module{padding:0 1rem;font-family:'DM Mono',monospace;font-size:.68rem;letter-spacing:1px;color:rgba(255,255,255,.45);white-space:nowrap;flex:1;}
+    .cnav-module strong{color:#fff;font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:1px;}
+    .cnav-progress{height:3px;background:#c94a2a;width:40%;position:absolute;bottom:0;left:0;}
+    .cnav-arrow{padding:0 1rem;font-family:'Bebas Neue',sans-serif;font-size:.85rem;letter-spacing:1px;color:rgba(255,255,255,.5);height:52px;display:flex;align-items:center;border-left:1px solid rgba(255,255,255,.1);white-space:nowrap;}
+    .cnav-arrow:hover{color:#fff;background:rgba(255,255,255,.05);}
+    .cnav-next{background:#c94a2a;color:#fff !important;}
+    .cnav-next:hover{background:#a83a1e !important;}
+  </style>
+  <a class="cnav-home" href="index.html">⌂ HOME</a>
+  <div class="cnav-module">MODULE 06 / 15 &nbsp; <strong>IP ADDRESS CALCULATION</strong></div>
+  <a class="cnav-arrow" href="module5_subnet-mask-interactive.html">← 5</a>
+  <a class="cnav-arrow cnav-next" href="module7_icmp-interactive.html">7 →</a>
+  <div class="cnav-progress"></div>
+</div>
+
+<nav>
+  <div class="nav-brand">IP<span>·</span>CALC</div>
+  <ul class="nav-links">
+    <li><a href="#intro">Intro</a></li>
+    <li><a href="#binary">Binary</a></li>
+    <li><a href="#anatomy">Anatomy</a></li>
+    <li><a href="#calculator">Calculator</a></li>
+    <li><a href="#steps">Method</a></li>
+    <li><a href="#examples">Examples</a></li>
+    <li><a href="#diagram">Diagram</a></li>
+    <li><a href="#quiz">Quiz</a></li>
+  </ul>
+</nav>
+
+<header class="hero">
+  <div class="hero-kicker">// Network Fundamentals — Module 6</div>
+  <h1>CALCULATING THE<br><em>IPv4 ADDRESS</em></h1>
+  <p class="hero-body">Given an IP address and a prefix, work out the four things that matter: the <strong style="color:#7eb3ff;">Network ID</strong>, the <strong style="color:#ff8a6a;">Broadcast address</strong>, the usable <strong style="color:var(--gold);">Host range</strong>, and the <strong style="color:#6fd46f;">number of hosts</strong>. Learn it by binary, learn it by shortcut, then check yourself with the live calculator.</p>
+  <div class="hero-meta">
+    <div class="hero-stat"><div class="hero-stat-num">2ⁿ−2</div><div class="hero-stat-label">Hosts per subnet</div></div>
+    <div class="hero-stat"><div class="hero-stat-num">/0–/32</div><div class="hero-stat-label">Prefix length</div></div>
+    <div class="hero-stat"><div class="hero-stat-num">4</div><div class="hero-stat-label">Worked examples</div></div>
+  </div>
+</header>
+
+<!-- 01 INTRO -->
+<section class="section" id="intro">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <div><div class="section-tag">// Overview</div><h2 class="section-title">FROM ONE IP, FOUR ANSWERS</h2></div>
+    </div>
+    <p class="lead">When you are handed a single IP address with a prefix — for example <strong>10.10.10.0/30</strong> — you are expected to derive everything else about that subnet. There are three ways to get there: by writing it out in <strong>binary</strong>, by using a fast <strong>decimal shortcut</strong>, or by feeding it into a <strong>subnet calculator</strong> program. This module walks through all three.</p>
+
+    <div class="formula-grid" style="margin-top:2rem;">
+      <div class="formula-card" style="border-left:3px solid var(--blue);">
+        <h5 style="color:var(--blue);">① Network ID</h5>
+        <p>The address that <strong>names the subnet</strong>. All host bits set to 0. It can never be assigned to a device.</p>
+      </div>
+      <div class="formula-card" style="border-left:3px solid var(--rust);">
+        <h5 style="color:var(--rust);">② Broadcast IP</h5>
+        <p>The <strong>last address</strong> in the subnet — all host bits set to 1. Reserved for broadcasting to every host.</p>
+      </div>
+      <div class="formula-card" style="border-left:3px solid var(--gold);">
+        <h5 style="color:#9c701f;">③ Host Range</h5>
+        <p>Every address <strong>between</strong> Network ID and Broadcast — these are the only addresses you can assign.</p>
+      </div>
+      <div class="formula-card" style="border-left:3px solid var(--green);">
+        <h5 style="color:var(--green);">④ Host Count</h5>
+        <p>How many usable addresses exist: <strong>2ⁿ − 2</strong>, where n is the number of host bits.</p>
+      </div>
+    </div>
+
+    <div class="note-box"><strong>Three methods:</strong> &nbsp;1) แบบบิต / Binary &nbsp;|&nbsp; 2) แบบลัด / Decimal shortcut &nbsp;|&nbsp; 3) แบบใช้ Program / Subnet calculator. The binary method shows you <em>why</em> the shortcut works.</div>
+  </div>
+</section>
+
+<!-- 02 BINARY BASICS -->
+<section class="section" id="binary" style="background:var(--cream);">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <div><div class="section-tag">// Foundation</div><h2 class="section-title">BINARY BASICS</h2></div>
+    </div>
+    <p class="lead">Every octet is 8 bits. Each bit position carries a fixed weight: <strong>128 · 64 · 32 · 16 · 8 · 4 · 2 · 1</strong>. To convert a decimal octet to binary, subtract weights from left to right: if the weight fits, write 1 and subtract; if not, write 0. Add the weights under the 1s and you get the decimal back.</p>
+
+    <div class="gif-container">
+      <div class="gif-title">INTERACTIVE — Decimal ⇄ Binary Converter (0–255)</div>
+      <div class="gif-stage">
+        <div style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:1.5rem;">
+          <div class="calc-field">
+            <label class="calc-label" style="color:var(--muted);">Decimal value (0–255)</label>
+            <input id="convInput" type="number" min="0" max="255" value="172" class="calc-input" style="background:#fff;color:var(--ink);border-color:var(--border);width:120px;" oninput="renderConv()">
+          </div>
+          <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+            <button class="calc-btn mini" onclick="setConv(172)">172</button>
+            <button class="calc-btn mini" onclick="setConv(255)">255</button>
+            <button class="calc-btn mini" onclick="setConv(192)">192</button>
+            <button class="calc-btn mini" onclick="setConv(252)">252</button>
+            <button class="calc-btn mini secondary" onclick="setConv(Math.floor(Math.random()*256))">Random</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="conv-chart" id="convChart">
+            <thead>
+              <tr><th rowspan="2" style="vertical-align:middle;">Decimal</th><th colspan="8">Bit weights (เลขประจำตำแหน่ง)</th><th rowspan="2" style="vertical-align:middle;">Binary</th></tr>
+              <tr><th>128</th><th>64</th><th>32</th><th>16</th><th>8</th><th>4</th><th>2</th><th>1</th></tr>
+            </thead>
+            <tbody id="convBody"></tbody>
+          </table>
+        </div>
+        <p id="convExplain" style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--muted);margin-top:1rem;"></p>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:1.2rem;flex-wrap:wrap;margin-top:1.5rem;">
+      <div style="background:var(--paper);border:1px solid var(--border);border-radius:4px;text-align:center;padding:1rem 1.4rem;min-width:170px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:0.78rem;letter-spacing:2px;color:var(--blue);margin-bottom:0.6rem;">255 = ALL ONES</div>
+        <div id="bitViz255" style="display:flex;justify-content:center;gap:2px;flex-wrap:wrap;"></div>
+        <div style="font-family:'DM Mono',monospace;font-size:1.3rem;color:var(--blue);margin-top:0.5rem;font-weight:700;">11111111</div>
+      </div>
+      <div style="background:var(--paper);border:1px solid var(--border);border-radius:4px;text-align:center;padding:1rem 1.4rem;min-width:170px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:0.78rem;letter-spacing:2px;color:#9c701f;margin-bottom:0.6rem;">0 = ALL ZEROS</div>
+        <div id="bitViz0" style="display:flex;justify-content:center;gap:2px;flex-wrap:wrap;"></div>
+        <div style="font-family:'DM Mono',monospace;font-size:1.3rem;color:#9c701f;margin-top:0.5rem;font-weight:700;">00000000</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 ANATOMY -->
+<section class="section" id="anatomy">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <div><div class="section-tag">// Structure</div><h2 class="section-title">NETWORK BITS vs HOST BITS</h2></div>
+    </div>
+    <p class="lead">The prefix (e.g. <strong>/24</strong>) is simply <strong>how many bits, counting from the left, belong to the Network</strong>. The rest are Host bits. Drag the slider to see where the boundary falls and how the subnet mask and host count change.</p>
+
+    <div class="gif-container">
+      <div class="gif-title">INTERACTIVE — Prefix Slider</div>
+      <div class="gif-stage">
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.2rem;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:1px;color:var(--rust);">PREFIX</span>
+          <input id="prefixSlider" type="range" min="0" max="32" value="24" style="flex:1;min-width:200px;accent-color:var(--rust);" oninput="renderPrefix()">
+          <span id="prefixLabel" style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--ink);min-width:60px;">/24</span>
+        </div>
+        <div id="prefixBits" style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:1rem;"></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.8rem;">
+          <div style="background:var(--paper);border:1px solid var(--border);border-top:2px solid var(--blue);border-radius:3px;padding:0.8rem;text-align:center;">
+            <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Subnet Mask</div>
+            <div id="prefixMask" style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--blue);"></div>
+          </div>
+          <div style="background:var(--paper);border:1px solid var(--border);border-top:2px solid var(--gold);border-radius:3px;padding:0.8rem;text-align:center;">
+            <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Host Bits</div>
+            <div id="prefixHostBits" style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#9c701f;"></div>
+          </div>
+          <div style="background:var(--paper);border:1px solid var(--border);border-top:2px solid var(--green);border-radius:3px;padding:0.8rem;text-align:center;">
+            <div style="font-family:'DM Mono',monospace;font-size:0.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Usable Hosts</div>
+            <div id="prefixHosts" style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--green);"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1.5rem;flex-wrap:wrap;margin-top:1rem;font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);">
+          <span><span class="bit bit-1" style="vertical-align:middle;"></span> Network bit (1)</span>
+          <span><span class="bit bit-0" style="vertical-align:middle;"></span> Host bit (0)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="note-box"><strong>Village analogy:</strong> 🌐 Network ID = the village name &nbsp;|&nbsp; 🏠 Host ID = the house number &nbsp;|&nbsp; 🔑 Subnet mask = the line that splits address into "which village" and "which house".</div>
+  </div>
+</section>
+
+<!-- 04 CALCULATOR -->
+<section class="section calc-section" id="calculator">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <div><div class="section-tag">// The Tool</div><h2 class="section-title">LIVE IP CALCULATOR</h2></div>
+    </div>
+    <p class="lead">Enter any IPv4 address and prefix (or pick a preset from the lesson). The calculator does the binary AND for the Network ID, flips host bits for the Broadcast, then derives the host range and count — and shows the binary working out, just like the worked examples.</p>
+
+    <div class="calc-card">
+      <div class="quick-fills">
+        <span style="font-family:'DM Mono',monospace;font-size:0.7rem;color:rgba(255,255,255,0.4);letter-spacing:1px;align-self:center;">PRESETS:</span>
+        <button class="quick-fill" onclick="setCalc('10.10.10.0',30)">10.10.10.0/30</button>
+        <button class="quick-fill" onclick="setCalc('10.10.10.4',30)">10.10.10.4/30</button>
+        <button class="quick-fill" onclick="setCalc('172.29.16.0',24)">172.29.16.0/24</button>
+        <button class="quick-fill" onclick="setCalc('192.168.1.0',24)">192.168.1.0/24</button>
+        <button class="quick-fill" onclick="setCalc('172.16.128.17',20)">172.16.128.17/20</button>
+      </div>
+
+      <div class="calc-input-row">
+        <div class="calc-field">
+          <label class="calc-label">Octet 1</label>
+          <input id="ip1" class="calc-input" type="number" min="0" max="255" value="10">
+        </div>
+        <span class="calc-sep">.</span>
+        <div class="calc-field">
+          <label class="calc-label">Octet 2</label>
+          <input id="ip2" class="calc-input" type="number" min="0" max="255" value="10">
+        </div>
+        <span class="calc-sep">.</span>
+        <div class="calc-field">
+          <label class="calc-label">Octet 3</label>
+          <input id="ip3" class="calc-input" type="number" min="0" max="255" value="10">
+        </div>
+        <span class="calc-sep">.</span>
+        <div class="calc-field">
+          <label class="calc-label">Octet 4</label>
+          <input id="ip4" class="calc-input" type="number" min="0" max="255" value="0">
+        </div>
+        <span class="calc-sep">/</span>
+        <div class="calc-field">
+          <label class="calc-label">Prefix</label>
+          <input id="prefix" class="calc-input prefix" type="number" min="0" max="32" value="30">
+        </div>
+        <button class="calc-btn" onclick="calculate()">▶ CALCULATE</button>
+      </div>
+      <div id="calcError" class="calc-error">⚠ Each octet must be 0–255 and the prefix must be 0–32.</div>
+
+      <div id="calcResult" class="calc-result">
+        <div class="result-rows">
+          <div class="result-item"><div class="result-item-label">Subnet Mask</div><div id="rMask" class="result-item-val ok"></div></div>
+          <div class="result-item" style="border-left-color:#7eb3ff;"><div class="result-item-label">Network ID</div><div id="rNet" class="result-item-val net-col"></div></div>
+          <div class="result-item" style="border-left-color:#ff8a6a;"><div class="result-item-label">Broadcast IP</div><div id="rBcast" class="result-item-val bcast-col"></div></div>
+          <div class="result-item" style="border-left-color:var(--gold);"><div class="result-item-label">First Host</div><div id="rFirst" class="result-item-val host-col"></div></div>
+          <div class="result-item" style="border-left-color:var(--gold);"><div class="result-item-label">Last Host</div><div id="rLast" class="result-item-val host-col"></div></div>
+          <div class="result-item" style="border-left-color:#6fd46f;"><div class="result-item-label">Usable Hosts</div><div id="rHosts" class="result-item-val ok"></div></div>
+        </div>
+
+        <div style="font-family:'Bebas Neue',sans-serif;letter-spacing:2px;color:var(--gold);font-size:1rem;margin-bottom:0.3rem;">BINARY WORKING (เลขฐานสอง)</div>
+        <div style="overflow-x:auto;">
+          <table class="bin-breakdown" id="rBinTable"></table>
+        </div>
+        <div id="rHostFormula" style="font-family:'DM Mono',monospace;font-size:0.8rem;color:rgba(255,255,255,0.6);margin-top:1rem;"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 METHOD -->
+<section class="section" id="steps" style="background:var(--cream);">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <div><div class="section-tag">// Step by step</div><h2 class="section-title">THE METHOD, BY HAND</h2></div>
+    </div>
+    <p class="lead">No calculator? Here is the exact sequence the lessons follow to solve any <strong>IP / prefix</strong> by hand.</p>
+
+    <div class="steps-grid">
+      <div class="step-card"><div class="step-num">1</div><div>
+        <h4>Write the mask from the prefix</h4>
+        <p>Put the prefix-many 1s from the left, fill the rest with 0s, then group into octets. Example: <code>/30</code> → <code>11111111.11111111.11111111.11111100</code> → <code>255.255.255.252</code>.</p>
+      </div></div>
+      <div class="step-card"><div class="step-num">2</div><div>
+        <h4>AND the IP with the mask → Network ID</h4>
+        <p>Bit by bit: <code>1 AND 1 = 1</code>, anything with a 0 gives 0. All host bits collapse to 0. That result is your <strong>Network ID</strong>.</p>
+      </div></div>
+      <div class="step-card"><div class="step-num">3</div><div>
+        <h4>Set all host bits to 1 → Broadcast</h4>
+        <p>Take the Network ID and flip every host bit to 1. That is the <strong>Broadcast address</strong> — the highest address in the subnet.</p>
+      </div></div>
+      <div class="step-card"><div class="step-num">4</div><div>
+        <h4>Range = Network+1 … Broadcast−1</h4>
+        <p>The <strong>usable host range</strong> is every address strictly between the Network ID and the Broadcast. First host = Network ID + 1; Last host = Broadcast − 1.</p>
+      </div></div>
+      <div class="step-card"><div class="step-num">5</div><div>
+        <h4>Count hosts with 2ⁿ − 2</h4>
+        <p>Count the host bits (n = 32 − prefix). Usable hosts = <code>2ⁿ − 2</code>. We subtract 2 for the Network ID and the Broadcast address, which can't be assigned.</p>
+      </div></div>
+    </div>
+
+    <div class="formula-grid" style="margin-top:2rem;">
+      <div class="formula-card">
+        <h5>Total addresses</h5>
+        <span class="formula">2ⁿ</span>
+        <p>where <strong>n = host bits = 32 − prefix</strong>. /30 → 2² = 4 total.</p>
+      </div>
+      <div class="formula-card">
+        <h5>Usable hosts</h5>
+        <span class="formula">2ⁿ − 2</span>
+        <p>Subtract the Network ID and the Broadcast. /30 → 4 − 2 = <strong>2 hosts</strong>.</p>
+      </div>
+      <div class="formula-card">
+        <h5>Number of subnets</h5>
+        <span class="formula">2ᵇ</span>
+        <p>where <strong>b = bits borrowed</strong> from the host portion when subnetting.</p>
+      </div>
+    </div>
+
+    <div class="note-box"><strong>Shortcut octet values:</strong> the only legal subnet-mask octet values are <code>128 · 192 · 224 · 240 · 248 · 252 · 254 · 255</code> — each adds one more 1-bit from the left.</div>
+  </div>
+</section>
+
+<!-- 06 REFERENCE -->
+<section class="section ref-section">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-num">06</div>
+      <div><div class="section-tag">// Cheat sheet</div><h2 class="section-title">PREFIX REFERENCE TABLE</h2></div>
+    </div>
+    <p class="lead">The common prefixes used in the worked examples and most coursework, with their masks and usable host counts.</p>
+    <div style="overflow-x:auto;">
+      <table class="mask-table">
+        <thead><tr><th>Prefix</th><th>Subnet Mask</th><th>Last Mask Octet (binary)</th><th>Host Bits</th><th>Usable Hosts</th></tr></thead>
+        <tbody>
+          <tr><td class="prefix">/8</td><td>255.0.0.0</td><td>11111111</td><td>24</td><td class="hosts">16,777,214</td></tr>
+          <tr><td class="prefix">/16</td><td>255.255.0.0</td><td>11111111</td><td>16</td><td class="hosts">65,534</td></tr>
+          <tr><td class="prefix">/20</td><td>255.255.240.0</td><td>11110000</td><td>12</td><td class="hosts">4,094</td></tr>
+          <tr><td class="prefix">/24</td><td>255.255.255.0</td><td>11111111</td><td>8</td><td class="hosts">254</td></tr>
+          <tr><td class="prefix">/25</td><td>255.255.255.128</td><td>10000000</td><td>7</td><td class="hosts">126</td></tr>
+          <tr><td class="prefix">/26</td><td>255.255.255.192</td><td>11000000</td><td>6</td><td class="hosts">62</td></tr>
+          <tr><td class="prefix">/27</td><td>255.255.255.224</td><td>11100000</td><td>5</td><td class="hosts">30</td></tr>
+          <tr><td class="prefix">/28</td><td>255.255.255.240</td><td>11110000</td><td>4</td><td class="hosts">14</td></tr>
+          <tr><td class="prefix">/29</td><td>255.255.255.248</td><td>11111000</td><td>3</td><td class="hosts">6</td></tr>
+          <tr><td class="prefix">/30</td><td>255.255.255.252</td><td>11111100</td><td>2</td><td class="hosts">2</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 07 WORKED EXAMPLES -->
+<section class="section" id="examples">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-num">07</div>
+      <div><div class="section-tag">// Practice</div><h2 class="section-title">FOUR WORKED EXAMPLES</h2></div>
+    </div>
+    <p class="lead">The same four problems solved in the videos, with the binary working written out. Switch between them with the tabs.</p>
+
+    <div class="example-tabs">
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="showTab('ex1',this)">10.10.10.0/30</button>
+        <button class="tab-btn" onclick="showTab('ex2',this)">10.10.10.4/30</button>
+        <button class="tab-btn" onclick="showTab('ex3',this)">172.29.16.0/24</button>
+        <button class="tab-btn" onclick="showTab('ex4',this)">192.168.1.0/24</button>
+      </div>
+
+      <!-- EX1 -->
+      <div class="tab-pane active" id="ex1">
+        <div class="ex-given">Given: <b>10.10.10.0 /30</b> &nbsp;→&nbsp; Subnet Mask 255.255.255.252</div>
+        <div class="ex-bin"><table>
+          <tr><th>Row</th><th>Decimal</th><th>Binary</th></tr>
+          <tr class="ip-r"><td class="rl">IP Address</td><td>10.10.10.0</td><td>00001010.00001010.00001010.000000<span class="host-part">00</span></td></tr>
+          <tr class="mask-r"><td class="rl">Subnet Mask</td><td>255.255.255.252</td><td>11111111.11111111.11111111.111111<span class="host-part">00</span></td></tr>
+          <tr class="net-r"><td class="rl">Network ID</td><td>10.10.10.0</td><td>00001010.00001010.00001010.000000<span class="host-part">00</span></td></tr>
+        </table></div>
+        <div class="ex-result-grid">
+          <div class="ex-res net"><div class="l">Network ID</div><div class="v">10.10.10.0</div></div>
+          <div class="ex-res bcast"><div class="l">Broadcast</div><div class="v">10.10.10.3</div></div>
+          <div class="ex-res host"><div class="l">Host Range</div><div class="v">.1 – .2</div></div>
+          <div class="ex-res"><div class="l">Usable Hosts</div><div class="v" style="color:var(--green);">2²−2 = 2</div></div>
+        </div>
+      </div>
+
+      <!-- EX2 -->
+      <div class="tab-pane" id="ex2">
+        <div class="ex-given">Given: <b>10.10.10.4 /30</b> &nbsp;→&nbsp; Subnet Mask 255.255.255.252</div>
+        <div class="ex-bin"><table>
+          <tr><th>Row</th><th>Decimal</th><th>Binary</th></tr>
+          <tr class="ip-r"><td class="rl">IP Address</td><td>10.10.10.4</td><td>00001010.00001010.00001010.000001<span class="host-part">00</span></td></tr>
+          <tr class="mask-r"><td class="rl">Subnet Mask</td><td>255.255.255.252</td><td>11111111.11111111.11111111.111111<span class="host-part">00</span></td></tr>
+          <tr class="net-r"><td class="rl">Network ID</td><td>10.10.10.4</td><td>00001010.00001010.00001010.000001<span class="host-part">00</span></td></tr>
+        </table></div>
+        <div class="ex-result-grid">
+          <div class="ex-res net"><div class="l">Network ID</div><div class="v">10.10.10.4</div></div>
+          <div class="ex-res bcast"><div class="l">Broadcast</div><div class="v">10.10.10.7</div></div>
+          <div class="ex-res host"><div class="l">Host Range</div><div class="v">.5 – .6</div></div>
+          <div class="ex-res"><div class="l">Usable Hosts</div><div class="v" style="color:var(--green);">2²−2 = 2</div></div>
+        </div>
+        <div class="note-box" style="margin-top:1.4rem;">A <strong>/30</strong> gives blocks of 4 addresses: <code>.0–.3</code>, <code>.4–.7</code>, <code>.8–.11</code> … This is why /30 is the classic choice for point-to-point links between two routers — exactly 2 usable hosts.</div>
+      </div>
+
+      <!-- EX3 -->
+      <div class="tab-pane" id="ex3">
+        <div class="ex-given">Given: <b>172.29.16.0 /24</b> &nbsp;→&nbsp; Subnet Mask 255.255.255.0</div>
+        <div class="ex-bin"><table>
+          <tr><th>Row</th><th>Decimal</th><th>Binary</th></tr>
+          <tr class="ip-r"><td class="rl">IP Address</td><td>172.29.16.0</td><td>10101100.00011101.00010000.<span class="host-part">00000000</span></td></tr>
+          <tr class="mask-r"><td class="rl">Subnet Mask</td><td>255.255.255.0</td><td>11111111.11111111.11111111.<span class="host-part">00000000</span></td></tr>
+          <tr class="net-r"><td class="rl">Network ID</td><td>172.29.16.0</td><td>10101100.00011101.00010000.<span class="host-part">00000000</span></td></tr>
+        </table></div>
+        <div class="ex-result-grid">
+          <div class="ex-res net"><div class="l">Network ID</div><div class="v">172.29.16.0</div></div>
+          <div class="ex-res bcast"><div class="l">Broadcast</div><div class="v">172.29.16.255</div></div>
+          <div class="ex-res host"><div class="l">Host Range</div><div class="v">.1 – .254</div></div>
+          <div class="ex-res"><div class="l">Usable Hosts</div><div class="v" style="color:var(--green);">2⁸−2 = 254</div></div>
+        </div>
+      </div>
+
+      <!-- EX4 -->
+      <div class="tab-pane" id="ex4">
+        <div class="ex-given">Given: <b>192.168.1.0 /24</b> &nbsp;→&nbsp; Subnet Mask 255.255.255.0</div>
+        <div class="ex-bin"><table>
+          <tr><th>Row</th><th>Decimal</th><th>Binary</th></tr>
+          <tr class="ip-r"><td class="rl">IP Address</td><td>192.168.1.0</td><td>11000000.10101000.00000001.<span class="host-part">00000000</span></td></tr>
+          <tr class="mask-r"><td class="rl">Subnet Mask</td><td>255.255.255.0</td><td>11111111.11111111.11111111.<span class="host-part">00000000</span></td></tr>
+          <tr class="net-r"><td class="rl">Network ID</td><td>192.168.1.0</td><td>11000000.10101000.00000001.<span class="host-part">00000000</span></td></tr>
+        </table></div>
+        <div class="ex-result-grid">
+          <div class="ex-res net"><div class="l">Network ID</div><div class="v">192.168.1.0</div></div>
+          <div class="ex-res bcast"><div class="l">Broadcast</div><div class="v">192.168.1.255</div></div>
+          <div class="ex-res host"><div class="l">Host Range</div><div class="v">.1 – .254</div></div>
+          <div class="ex-res"><div class="l">Usable Hosts</div><div class="v" style="color:var(--green);">2⁸−2 = 254</div></div>
+        </div>
+        <div class="note-box" style="margin-top:1.4rem;">host bits n = 8, so usable hosts = <code>2ⁿ − 2 = 2⁸ − 2 = 256 − 2 = 254</code>. The full LAN range a router can hand out.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 08 NETWORK DIAGRAM -->
+<section class="section netdiagram" id="diagram">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-num">08</div>
+      <div><div class="section-tag">// Putting it together</div><h2 class="section-title">IT ALL FITS A NETWORK</h2></div>
+    </div>
+    <p class="lead">The four examples aren't random — they're the addresses on a real topology. The <strong style="color:#7eb3ff;">/30</strong> links join routers point-to-point; the <strong style="color:var(--gold);">/24</strong> blocks are the LANs where end devices live.</p>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;font-family:'DM Mono',monospace;">
+        <defs>
+          <style>
+            .rtr{fill:#1a3a6b;stroke:#7eb3ff;stroke-width:2;}
+            .sw{fill:#2a6b3a;stroke:#6fd46f;stroke-width:1.5;}
+            .dev{fill:rgba(255,255,255,0.06);stroke:rgba(255,255,255,0.25);stroke-width:1.5;}
+            .lbl{fill:#cfc8bf;font-size:12px;}
+            .lblw{fill:#fff;font-size:13px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
+            .wan{fill:#7eb3ff;font-size:11px;}
+            .lan{fill:#d4a039;font-size:11px;}
+            .link{stroke:#7eb3ff;stroke-width:2;}
+            .linklan{stroke:rgba(255,255,255,0.25);stroke-width:1.5;}
+          </style>
+        </defs>
+
+        <!-- WAN links -->
+        <line class="link" x1="180" y1="90" x2="360" y2="90"/>
+        <line class="link" x1="540" y1="90" x2="720" y2="90"/>
+        <text class="wan" x="200" y="78">10.10.10.0/30</text>
+        <text class="wan" x="560" y="78">10.10.10.4/30</text>
+
+        <!-- Routers -->
+        <rect class="rtr" x="120" y="60" width="60" height="60" rx="6"/>
+        <text class="lblw" x="150" y="95" text-anchor="middle">HQ2</text>
+        <rect class="rtr" x="360" y="60" width="60" height="60" rx="6"/>
+        <text class="lblw" x="390" y="95" text-anchor="middle">HQ1</text>
+        <rect class="rtr" x="720" y="60" width="60" height="60" rx="6"/>
+        <text class="lblw" x="750" y="95" text-anchor="middle">BR1</text>
+
+        <!-- HQ2 LAN -->
+        <line class="linklan" x1="150" y1="120" x2="150" y2="200"/>
+        <rect class="sw" x="120" y="200" width="60" height="34" rx="5"/>
+        <text class="lblw" x="150" y="222" text-anchor="middle" style="fill:#fff;">SW2</text>
+        <text class="lan" x="60" y="160">172.29.16.0/24</text>
+        <line class="linklan" x1="120" y1="234" x2="70" y2="300"/>
+        <line class="linklan" x1="150" y1="234" x2="150" y2="300"/>
+        <line class="linklan" x1="180" y1="234" x2="230" y2="300"/>
+        <rect class="dev" x="40" y="300" width="60" height="40" rx="4"/>
+        <text class="lbl" x="70" y="324" text-anchor="middle">Server</text>
+        <rect class="dev" x="120" y="300" width="60" height="40" rx="4"/>
+        <text class="lbl" x="150" y="324" text-anchor="middle">DNS</text>
+        <rect class="dev" x="200" y="300" width="60" height="40" rx="4"/>
+        <text class="lbl" x="230" y="324" text-anchor="middle">Printer</text>
+        <text class="lan" x="40" y="360">.10 / .20 / .30</text>
+
+        <!-- Branch LAN -->
+        <line class="linklan" x1="750" y1="120" x2="750" y2="200"/>
+        <rect class="sw" x="720" y="200" width="60" height="34" rx="5"/>
+        <text class="lblw" x="750" y="222" text-anchor="middle" style="fill:#fff;">SW1</text>
+        <text class="lan" x="690" y="160">192.168.1.0/24</text>
+        <line class="linklan" x1="730" y1="234" x2="700" y2="300"/>
+        <line class="linklan" x1="770" y1="234" x2="800" y2="300"/>
+        <rect class="dev" x="660" y="300" width="80" height="40" rx="4"/>
+        <text class="lbl" x="700" y="324" text-anchor="middle">Notebook 1</text>
+        <rect class="dev" x="760" y="300" width="80" height="40" rx="4"/>
+        <text class="lbl" x="800" y="324" text-anchor="middle">Notebook 2</text>
+        <text class="lan" x="660" y="360">.101 / .102</text>
+
+        <!-- legend -->
+        <line class="link" x1="120" y1="420" x2="160" y2="420"/>
+        <text class="lbl" x="170" y="424">/30 WAN link (router ↔ router, 2 hosts)</text>
+        <line class="linklan" x1="540" y1="420" x2="580" y2="420"/>
+        <text class="lbl" x="590" y="424">/24 LAN (up to 254 hosts)</text>
+      </svg>
+    </div>
+    <div class="note-box" style="background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.1);color:#9a9590;">The two router-to-router links use <strong style="color:#7eb3ff;">/30</strong> subnets (just 2 usable addresses each — perfect for a point-to-point link), while each site LAN is a <strong style="color:var(--gold);">/24</strong> with room for 254 devices.</div>
+  </div>
+</section>
+
+<!-- 09 QUIZ -->
+<section class="section quiz-section" id="quiz">
+  <div class="section-inner quiz-container">
+    <div class="section-header">
+      <div class="section-num">09</div>
+      <div><div class="section-tag">// Test yourself</div><h2 class="section-title">IP CALCULATION QUIZ</h2></div>
+    </div>
+
+    <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="qProgressFill"></div></div>
+
+    <div id="quizBody">
+      <div class="quiz-q-label" id="qLabel">QUESTION 1 / 10</div>
+      <div class="quiz-question" id="qText"></div>
+      <div class="quiz-options" id="qOptions"></div>
+      <div class="quiz-feedback" id="qFeedback"></div>
+      <div class="quiz-actions">
+        <button class="btn-quiz" id="btnNext" onclick="nextQ()">NEXT →</button>
+        <div class="quiz-score" id="qScoreDisplay">Score: 0 / 0</div>
+      </div>
+    </div>
+
+    <div class="quiz-result" id="quizResult">
+      <h3>QUIZ COMPLETE</h3>
+      <div class="score-big" id="rScore">0/10</div>
+      <p id="rMsg"></p>
+      <button class="calc-btn" onclick="startQuiz()">↺ TRY AGAIN</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  IP ADDRESS CALCULATION · NETWORK FUNDAMENTALS · <span>IPv4</span> · NETWORK ID · BROADCAST · HOST RANGE · 2ⁿ−2
+</footer>
+
+<script>
+const WEIGHTS=[128,64,32,16,8,4,2,1];
+function toBin8(n){return n.toString(2).padStart(8,'0');}
+
+/* ---- BINARY CONVERTER ---- */
+function setConv(v){document.getElementById('convInput').value=v;renderConv();}
+function renderConv(){
+  let v=parseInt(document.getElementById('convInput').value);
+  const body=document.getElementById('convBody');
+  const explain=document.getElementById('convExplain');
+  if(isNaN(v)||v<0||v>255){body.innerHTML='<tr><td colspan="10" style="color:var(--rust);">Enter a value 0–255</td></tr>';explain.textContent='';return;}
+  const bin=toBin8(v);
+  let cells='';let parts=[];let rem=v;
+  WEIGHTS.forEach((w,i)=>{
+    const on=bin[i]==='1';
+    cells+='<td class="'+(on?'on':'off')+'">'+(on?'1':'0')+'</td>';
+    if(on)parts.push(w);
+  });
+  body.innerHTML='<tr><td class="dec-col">'+v+'</td>'+cells+'<td class="bin-col">'+bin+'</td></tr>';
+  explain.innerHTML = parts.length? ('► '+parts.join(' + ')+' = <strong style="color:var(--rust);">'+v+'</strong>  →  binary <strong style="color:var(--blue);">'+bin+'</strong>') : ('► No bits set → '+v+' = binary <strong style="color:var(--blue);">'+bin+'</strong>');
+}
+
+function renderBitDiv(id,val){
+  const c=document.getElementById(id);c.innerHTML='';
+  toBin8(val).split('').forEach(b=>{const s=document.createElement('span');s.className='bit '+(b==='1'?'bit-1':'bit-0');s.textContent=b;c.appendChild(s);});
+}
+
+/* ---- PREFIX SLIDER ---- */
+function prefixToMaskArr(p){
+  const arr=[0,0,0,0];
+  for(let i=0;i<32;i++){if(i<p)arr[Math.floor(i/8)]|=(1<<(7-(i%8)));}
+  return arr;
+}
+function renderPrefix(){
+  const p=parseInt(document.getElementById('prefixSlider').value);
+  document.getElementById('prefixLabel').textContent='/'+p;
+  const bits=document.getElementById('prefixBits');bits.innerHTML='';
+  for(let i=0;i<32;i++){
+    if(i>0&&i%8===0){const d=document.createElement('span');d.textContent='.';d.style.cssText='color:var(--rust);font-weight:700;align-self:center;margin:0 2px;';bits.appendChild(d);}
+    const s=document.createElement('span');const net=i<p;
+    s.className='bit '+(net?'bit-1':'bit-0');s.textContent=net?'1':'0';
+    bits.appendChild(s);
+  }
+  const mask=prefixToMaskArr(p);
+  document.getElementById('prefixMask').textContent=mask.join('.');
+  const hb=32-p;
+  document.getElementById('prefixHostBits').textContent=hb+' bits';
+  const hosts=hb>=2?(Math.pow(2,hb)-2):0;
+  document.getElementById('prefixHosts').textContent=hosts.toLocaleString();
+}
+
+/* ---- CALCULATOR ---- */
+function setCalc(ip,p){
+  const o=ip.split('.');
+  document.getElementById('ip1').value=o[0];document.getElementById('ip2').value=o[1];
+  document.getElementById('ip3').value=o[2];document.getElementById('ip4').value=o[3];
+  document.getElementById('prefix').value=p;
+  calculate();
+  document.getElementById('calculator').scrollIntoView({behavior:'smooth'});
+}
+function calculate(){
+  const err=document.getElementById('calcError');
+  const oct=[1,2,3,4].map(i=>parseInt(document.getElementById('ip'+i).value));
+  const p=parseInt(document.getElementById('prefix').value);
+  if(oct.some(v=>isNaN(v)||v<0||v>255)||isNaN(p)||p<0||p>32){err.classList.add('show');document.getElementById('calcResult').classList.remove('show');return;}
+  err.classList.remove('show');
+  const mask=prefixToMaskArr(p);
+  const net=oct.map((v,i)=>v&mask[i]);
+  const wild=mask.map(m=>255-m);
+  const bcast=net.map((v,i)=>v|wild[i]);
+  const hb=32-p;
+  const total=Math.pow(2,hb);
+  const usable=hb>=2?total-2:(hb===1?0:1);
+  // first/last host
+  let first,last;
+  if(hb>=2){first=[...net];first[3]+=1; // simplistic +1 within last octet handling carry
+    first=incIP(net,1);last=incIP(bcast,-1);}
+  else{first=net;last=bcast;}
+  document.getElementById('rMask').textContent=mask.join('.');
+  document.getElementById('rNet').textContent=net.join('.');
+  document.getElementById('rBcast').textContent=bcast.join('.');
+  document.getElementById('rFirst').textContent=hb>=2?first.join('.'):'—';
+  document.getElementById('rLast').textContent=hb>=2?last.join('.'):'—';
+  document.getElementById('rHosts').textContent=usable.toLocaleString();
+  // binary table
+  const t=document.getElementById('rBinTable');
+  t.innerHTML='<tr><th>Row</th><th>Decimal</th><th class="bb-bin">Binary (Network | Host split)</th></tr>'
+    +binRow('IP Address',oct,'bb-ip',p)
+    +binRow('Subnet Mask',mask,'bb-mask',p)
+    +binRow('Network ID',net,'bb-net',p)
+    +binRow('Broadcast',bcast,'bb-net',p);
+  document.getElementById('rHostFormula').innerHTML='Host bits n = 32 − '+p+' = <strong style="color:#fff;">'+hb+'</strong> &nbsp;→&nbsp; usable hosts = 2<sup>'+hb+'</sup> − 2 = <strong style="color:#6fd46f;">'+usable.toLocaleString()+'</strong>'+(hb<2?' (too small for usable hosts)':'');
+  document.getElementById('calcResult').classList.add('show');
+}
+function incIP(arr,delta){
+  let n=((arr[0]<<24)>>>0)+(arr[1]<<16)+(arr[2]<<8)+arr[3];
+  n=(n+delta)>>>0;
+  return [(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255];
+}
+function binRow(label,arr,cls,p){
+  let bin='';let pos=0;
+  arr.forEach((v,i)=>{
+    const b=toBin8(v);
+    let oct='';
+    for(let k=0;k<8;k++){
+      const netbit=pos<p;
+      oct+= netbit? b[k] : '<span class="host-part">'+b[k]+'</span>';
+      pos++;
+    }
+    bin+= (i>0?'<span style="color:var(--rust);">.</span>':'')+oct;
+  });
+  return '<tr><td class="bb-label">'+label+'</td><td class="bb-dec '+cls+'">'+arr.join('.')+'</td><td class="bb-bin '+cls+'">'+bin+'</td></tr>';
+}
+
+/* ---- TABS ---- */
+function showTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');btn.classList.add('active');
+}
+
+/* ---- QUIZ ---- */
+const questions=[
+  {q:"To find the Network ID from an IP and mask, which operation do you use?",opts:["OR","XOR","AND","NOT"],a:2,exp:"You AND each IP bit with the mask bit. 1 AND 1 = 1; anything with a 0 → 0, which zeroes out all host bits."},
+  {q:"What is the subnet mask for a /30 network?",opts:["255.255.255.0","255.255.255.252","255.255.255.248","255.255.255.192"],a:1,exp:"/30 = 30 ones from the left → last octet is 11111100 = 252 → 255.255.255.252."},
+  {q:"IP 10.10.10.0/30 — what is the Broadcast address?",opts:["10.10.10.1","10.10.10.2","10.10.10.3","10.10.10.4"],a:2,exp:"Block is .0–.3. Set host bits to 1 → 10.10.10.3 is the broadcast (highest address in the subnet)."},
+  {q:"IP 10.10.10.4/30 — what is the usable host range?",opts:["10.10.10.4 – 10.10.10.7","10.10.10.5 – 10.10.10.6","10.10.10.1 – 10.10.10.2","10.10.10.4 – 10.10.10.5"],a:1,exp:"Network .4, Broadcast .7 → usable = .5 and .6 (Network+1 to Broadcast−1)."},
+  {q:"How many usable hosts does a /24 network provide?",opts:["256","255","254","253"],a:2,exp:"Host bits = 32 − 24 = 8 → 2⁸ − 2 = 256 − 2 = 254."},
+  {q:"Why subtract 2 in the formula 2ⁿ − 2?",opts:["For the gateway and DNS","For the Network ID and the Broadcast address","For IPv6 compatibility","For the subnet mask"],a:1,exp:"The Network ID and the Broadcast address can't be assigned to a device, so they're removed from the usable count."},
+  {q:"IP 192.168.1.0/24 — what is the Network ID?",opts:["192.168.1.1","192.168.0.0","192.168.1.0","192.168.1.255"],a:2,exp:"With /24 the last octet is all host bits → AND gives 192.168.1.0, the Network ID itself."},
+  {q:"A point-to-point link between two routers is best served by which prefix?",opts:["/24","/16","/30","/8"],a:2,exp:"/30 gives exactly 2 usable hosts (2² − 2) — ideal for a link with only two endpoints."},
+  {q:"What is 252 in binary?",opts:["11111100","11110000","11111110","11000000"],a:0,exp:"252 = 128+64+32+16+8+4 = 11111100. The two trailing 0s are the host bits of a /30."},
+  {q:"IP 172.29.16.0/24 — what is the Broadcast address?",opts:["172.29.16.0","172.29.16.1","172.29.16.254","172.29.16.255"],a:3,exp:"All host bits (last octet) set to 1 → 172.29.16.255."}
+];
+let qIdx=0,score=0,answered=false;
+function startQuiz(){
+  qIdx=0;score=0;answered=false;
+  document.getElementById('quizBody').style.display='block';
+  document.getElementById('quizResult').style.display='none';
+  document.getElementById('btnNext').style.display='none';
+  document.getElementById('qScoreDisplay').textContent='Score: 0 / 0';
+  renderQ();
+}
+function renderQ(){
+  const q=questions[qIdx];
+  document.getElementById('qLabel').textContent='QUESTION '+(qIdx+1)+' / '+questions.length;
+  document.getElementById('qText').innerHTML=q.q.replace(/(\d+\.\d+\.\d+\.\d+\/\d+|\/\d+|2[ⁿ⁸²]?−?2?)/g,m=>'<code>'+m+'</code>');
+  document.getElementById('qProgressFill').style.width=(qIdx/questions.length*100)+'%';
+  const opts=document.getElementById('qOptions');opts.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const btn=document.createElement('button');btn.className='quiz-opt';
+    btn.innerHTML='<span class="opt-letter">'+String.fromCharCode(65+i)+'</span>'+o;
+    btn.onclick=()=>selectAnswer(i);opts.appendChild(btn);
+  });
+  document.getElementById('qFeedback').className='quiz-feedback';
+  document.getElementById('qFeedback').textContent='';
+  document.getElementById('btnNext').style.display='none';
+  answered=false;
+}
+function selectAnswer(idx){
+  if(answered)return;answered=true;
+  const q=questions[qIdx];
+  document.querySelectorAll('.quiz-opt').forEach((b,i)=>{
+    b.disabled=true;
+    if(i===q.a)b.classList.add('correct');
+    if(i===idx&&idx!==q.a)b.classList.add('wrong');
+  });
+  const fb=document.getElementById('qFeedback');
+  if(idx===q.a){score++;fb.textContent='✓ Correct! '+q.exp;fb.className='quiz-feedback show ok';}
+  else{fb.textContent='✗ Not quite. '+q.exp;fb.className='quiz-feedback show bad';}
+  document.getElementById('qScoreDisplay').textContent='Score: '+score+' / '+(qIdx+1);
+  document.getElementById('btnNext').style.display='inline-block';
+  document.getElementById('btnNext').textContent = qIdx>=questions.length-1?'SEE RESULT →':'NEXT →';
+}
+function nextQ(){
+  qIdx++;
+  if(qIdx>=questions.length){
+    document.getElementById('quizBody').style.display='none';
+    document.getElementById('quizResult').style.display='block';
+    document.getElementById('rScore').textContent=score+'/'+questions.length;
+    document.getElementById('qProgressFill').style.width='100%';
+    const pct=score/questions.length;
+    const msgs=['📚 Keep reviewing Sections 04–07 — the binary working makes it click.','👍 Good effort! Re-run the calculator on the presets and try again.','🎉 Well done! You can calculate IPv4 subnets confidently.','🏆 Perfect score! IP Calculation Master.'];
+    document.getElementById('rMsg').textContent=msgs[pct>=1?3:pct>=0.8?2:pct>=0.5?1:0];
+  }else{renderQ();}
+}
+
+/* ---- INIT ---- */
+window.addEventListener('DOMContentLoaded',()=>{
+  renderConv();
+  renderBitDiv('bitViz255',255);
+  renderBitDiv('bitViz0',0);
+  renderPrefix();
+  calculate();
+  startQuiz();
+});
+</script>
+</body>
+</html>
