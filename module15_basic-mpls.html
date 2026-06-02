@@ -1731,16 +1731,18 @@ window.addEventListener('scroll',function(){
 });
 </script>
 <style id="bnav-css">
-  .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:2rem 3rem 3rem;border-top:1px solid var(--border,#d0cab8);flex-wrap:wrap;gap:1rem;max-width:1100px;margin:0 auto;}
-  .bnav-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.4rem;border:1px solid var(--border,#d0cab8);border-radius:2px;text-decoration:none;font-family:"Bebas Neue",sans-serif;font-size:.95rem;letter-spacing:1px;color:var(--ink,#0f1117);background:var(--paper,#f5f2eb);transition:all .2s;}
-  .bnav-btn:hover{border-color:var(--rust,#c94a2a);color:var(--rust,#c94a2a);background:rgba(201,74,42,0.04);transform:translateY(-1px);}
-  .bnav-home{border-color:transparent;color:var(--muted,#6b6560);}
-  .bnav-home:hover{background:transparent;border-color:transparent;color:var(--ink,#0f1117);}
-</style>
+    .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:2rem 3rem 3rem;border-top:1px solid var(--border,#d0cab8);flex-wrap:wrap;gap:1rem;max-width:1100px;margin:0 auto;}
+    .bnav-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.4rem;border:1px solid var(--border,#d0cab8);border-radius:2px;text-decoration:none;font-family:"Bebas Neue",sans-serif;font-size:.95rem;letter-spacing:1px;color:var(--ink,#0f1117);background:var(--paper,#f5f2eb);transition:all .2s;}
+    .bnav-btn:hover{border-color:var(--rust,#c94a2a);color:var(--rust,#c94a2a);}
+    .bnav-complete{background:var(--rust,#c94a2a)!important;color:#fff!important;border-color:var(--rust,#c94a2a)!important;}
+    .bnav-complete:hover{background:#a83a1e!important;}
+    .bnav-home{background:var(--ink,#0f1117)!important;color:#fff!important;border-color:var(--ink,#0f1117)!important;}
+    .bnav-home:hover{background:#222!important;}
+  </style>
+
 <div class="bottom-nav">
-  <a class="bnav-btn" href="module14_basic-bgp.html">← Module 14</a>
-  <a class="bnav-btn bnav-home" href="index.html">⌂ Home</a>
-  <span class="bnav-btn bnav-complete">Course Complete ✓</span>
-</div>
+    <a class="bnav-btn" href="basic-bgp.html">← Module 14</a>
+    <a class="bnav-btn bnav-home" href="index.html">⌂ Home</a>
+    <a class="bnav-btn bnav-complete">Course Complete ✓</a>
 </body>
 </html>
