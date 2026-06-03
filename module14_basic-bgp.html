@@ -1,9 +1,24 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Module 14 — Basic BGP</title><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BGP — Border Gateway Protocol | Module 14</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#0f1117;--paper:#f5f2eb;--cream:#ede9df;--rust:#c94a2a;--rust-light:rgba(201,74,42,0.08);--blue:#1a3a6b;--blue-light:#e8eef8;--gold:#d4a039;--green:#2a6b3a;--green-light:#e8f5eb;--muted:#6b6560;--border:#d0cab8;}
-*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
-body{background:var(--paper);color:var(--ink);font-family:"DM Sans",sans-serif;line-height:1.7;}
+:root {
+  --ink:#0f1117; --paper:#f5f2eb; --cream:#ede9df;
+  --rust:#c94a2a; --rust-light:rgba(201,74,42,.08);
+  --blue:#1a3a6b; --blue-light:#e8eef8;
+  --gold:#d4a039; --green:#2a6b3a; --green-light:#e8f5eb;
+  --muted:#6b6560; --border:#d0cab8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--ink);font-family:"DM Sans",sans-serif;line-height:1.75;overflow-x:hidden;}
 body::before{content:"";position:fixed;inset:0;opacity:.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");pointer-events:none;z-index:999;}
+
+/* ── UPPER NAV ── */
 #course-navbar{position:sticky;top:0;z-index:9999;background:#0f1117;border-bottom:3px solid #c94a2a;display:flex;align-items:center;height:52px;position:relative;}
 #course-navbar a{text-decoration:none;}
 .cnav-home{padding:0 1.2rem;font-family:"Bebas Neue",sans-serif;font-size:1rem;letter-spacing:1.5px;color:#d4a039;height:52px;display:flex;align-items:center;border-right:1px solid rgba(255,255,255,.1);}
@@ -13,82 +28,845 @@ body::before{content:"";position:fixed;inset:0;opacity:.025;background-image:url
 .cnav-progress{height:3px;background:#c94a2a;position:absolute;bottom:0;left:0;}
 .cnav-arrow{padding:0 1rem;font-family:"Bebas Neue",sans-serif;font-size:.85rem;letter-spacing:1px;color:rgba(255,255,255,.5);height:52px;display:flex;align-items:center;border-left:1px solid rgba(255,255,255,.1);}
 .cnav-arrow:hover{color:#fff;background:rgba(255,255,255,.05);}
-.cnav-next{background:#c94a2a;color:#fff !important;}.cnav-next:hover{background:#a83a1e !important;}
+.cnav-next{background:#c94a2a;color:#fff !important;}
+.cnav-next:hover{background:#a83a1e !important;}
+
+/* ── HERO ── */
 .hero{background:var(--ink);color:#fff;padding:4rem 3rem 3rem;position:relative;overflow:hidden;}
+.hero::after{content:"BGP";position:absolute;right:3rem;top:50%;transform:translateY(-50%);font-family:"Bebas Neue",sans-serif;font-size:12rem;color:rgba(255,255,255,.03);letter-spacing:6px;pointer-events:none;}
 .hero-kicker{font-family:"DM Mono",monospace;font-size:.7rem;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:.8rem;}
-.hero h1{font-family:"Bebas Neue",sans-serif;font-size:clamp(2.5rem,6vw,4.5rem);line-height:.95;letter-spacing:2px;margin-bottom:1rem;}
+.hero h1{font-family:"Bebas Neue",sans-serif;font-size:clamp(2.5rem,7vw,5rem);line-height:.95;letter-spacing:2px;margin-bottom:1rem;}
 .hero h1 em{font-style:normal;color:var(--rust);}
-.hero p{color:#9a9590;font-size:.95rem;font-weight:300;max-width:560px;margin-bottom:1.2rem;}
-.hero-date{display:inline-flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:2px;padding:.3rem .9rem;font-family:"DM Mono",monospace;font-size:.72rem;color:#aaa;}
-.prog-wrap{margin-top:1.2rem;background:rgba(255,255,255,.1);border-radius:2px;height:3px;}
+.hero p{color:#9a9590;font-size:.95rem;font-weight:300;max-width:580px;margin-bottom:1rem;}
+.pill-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;}
+.pill{font-family:"DM Mono",monospace;font-size:.68rem;padding:.25rem .7rem;border-radius:20px;border:1px solid;background:transparent;}
+.pill-blue{color:#7eb3ff;border-color:rgba(26,58,107,.6);}
+.pill-teal{color:#6fd4b0;border-color:rgba(42,107,80,.6);}
+.pill-purple{color:#c4b0f8;border-color:rgba(140,110,200,.4);}
+.prog-wrap{margin-top:1.5rem;background:rgba(255,255,255,.1);border-radius:2px;height:3px;}
 .prog-bar{height:3px;background:var(--rust);border-radius:2px;}
-.sec{max-width:960px;margin:0 auto;padding:2.5rem 3rem;}
-.sec-hdr{display:flex;align-items:baseline;gap:1rem;margin-bottom:1.2rem;}
+
+/* ── TOC ── */
+.toc-wrap{max-width:960px;margin:2rem auto;padding:0 3rem;}
+.toc{background:var(--cream);border:1px solid var(--border);border-radius:4px;padding:1.2rem 1.5rem;}
+.toc-title{font-family:"DM Mono",monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.8rem;}
+.toc ol{padding-left:1.2rem;}
+.toc li{margin-bottom:.25rem;font-size:.88rem;}
+.toc a{color:var(--blue);text-decoration:none;}
+.toc a:hover{text-decoration:underline;color:var(--rust);}
+
+/* ── SECTION ── */
+.sec{max-width:960px;margin:0 auto;padding:2.5rem 3rem;border-bottom:1px solid var(--border);}
+.sec-hdr{display:flex;align-items:baseline;gap:1rem;margin-bottom:1.5rem;}
 .sec-num{font-family:"Bebas Neue",sans-serif;font-size:3.5rem;color:var(--border);line-height:1;flex-shrink:0;}
 .sec-tag{font-family:"DM Mono",monospace;font-size:.65rem;color:var(--rust);letter-spacing:2px;text-transform:uppercase;margin-bottom:.2rem;}
-.sec-title{font-family:"Bebas Neue",sans-serif;font-size:1.8rem;letter-spacing:.5px;}
-.lead{color:var(--muted);max-width:680px;margin-bottom:1rem;font-size:.93rem;}
+.sec-title{font-family:"Bebas Neue",sans-serif;font-size:1.8rem;letter-spacing:.5px;line-height:1.1;}
+.lead{color:var(--muted);max-width:720px;margin-bottom:1rem;font-size:.93rem;line-height:1.7;}
 .lead strong{color:var(--ink);}
+.sec p{color:var(--muted);margin-bottom:.8rem;font-size:.93rem;line-height:1.7;}
+.sec p strong{color:var(--ink);}
+.sec h3{font-family:"Bebas Neue",sans-serif;font-size:1.3rem;letter-spacing:.5px;margin:1.5rem 0 .6rem;color:var(--ink);}
+
+/* ── NOTES / CALLOUTS ── */
+.note{font-family:"DM Mono",monospace;font-size:.78rem;color:var(--muted);padding:.8rem 1rem;border:1px solid var(--border);border-left:3px solid var(--gold);margin:.8rem 0;line-height:1.65;border-radius:2px;}
+.note strong{color:var(--rust);}
+.note .note-label{display:block;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem;opacity:.7;}
+.note.blue{border-left-color:var(--blue);}
+.note.blue strong{color:var(--blue);}
+.note.green{border-left-color:var(--green);}
+.note.green strong{color:var(--green);}
+.note.rust{border-left-color:var(--rust);}
+.note.purple{border-left-color:#7a3a8b;}
+.note.purple strong{color:#7a3a8b;}
+
+/* ── DIAGRAM PANEL ── */
 .gif-wrap{border:2px solid var(--border);border-radius:4px;overflow:hidden;margin:1.2rem 0;}
 .gif-hdr{background:var(--ink);color:var(--gold);padding:.5rem 1rem;font-family:"Bebas Neue",sans-serif;font-size:.82rem;letter-spacing:2px;display:flex;align-items:center;gap:.5rem;}
 .gif-hdr::before{content:"▶";color:var(--rust);font-size:.65rem;}
-.gif-stage{padding:1.5rem;}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
-.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}
+.gif-stage{padding:1.5rem;background:var(--cream);}
+.gif-stage.dark{background:#0f1117;}
+
+/* ── CARDS ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin:1rem 0;}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:1rem 0;}
 .card{background:var(--cream);border:1px solid var(--border);border-radius:4px;overflow:hidden;}
-.card-head{padding:.7rem 1.2rem;font-family:"Bebas Neue",sans-serif;font-size:1rem;letter-spacing:1.5px;color:#fff;}
-.card-head.blue{background:var(--blue);}.card-head.rust{background:var(--rust);}.card-head.green{background:var(--green);}
-.card-body{padding:1.1rem;font-size:.87rem;color:var(--muted);line-height:1.6;}
+.card-head{padding:.65rem 1.2rem;font-family:"Bebas Neue",sans-serif;font-size:.95rem;letter-spacing:1.5px;color:#fff;}
+.card-head.blue{background:var(--blue);}
+.card-head.rust{background:var(--rust);}
+.card-head.green{background:var(--green);}
+.card-head.gold{background:var(--gold);color:var(--ink);}
+.card-body{padding:1rem 1.2rem;font-size:.87rem;color:var(--muted);line-height:1.65;}
 .card-body strong{color:var(--ink);}
-.note{font-family:"DM Mono",monospace;font-size:.78rem;color:var(--muted);padding:.8rem 1rem;border:1px solid var(--border);border-left:3px solid var(--gold);margin:.8rem 0;line-height:1.6;}
-.note strong{color:var(--rust);}.note.blue{border-left-color:var(--blue);}.note.green{border-left-color:var(--green);}
-.kp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.8rem;margin:1rem 0;}
-.kp{background:var(--cream);border:1px solid var(--border);border-radius:3px;padding:1rem;font-size:.87rem;display:flex;gap:.7rem;}
-.kp-dot{width:6px;height:6px;border-radius:50%;background:var(--rust);flex-shrink:0;margin-top:.55rem;}
-.kp-dot.blue{background:var(--blue);}.kp-dot.green{background:var(--green);}
-.ref-table{width:100%;border-collapse:collapse;font-size:.85rem;}
-.ref-table th{background:var(--ink);color:#fff;font-family:"Bebas Neue",sans-serif;font-size:.9rem;letter-spacing:1.5px;padding:.7rem 1rem;text-align:left;}
-.ref-table td{padding:.7rem 1rem;border-bottom:1px solid var(--border);font-family:"DM Mono",monospace;font-size:.82rem;}
-.ref-table tr:nth-child(even) td{background:rgba(0,0,0,.03);}.hl{color:var(--rust);font-weight:600;}
-.pdf-sec{background:var(--cream);border:1px solid var(--border);border-radius:6px;padding:2rem;margin:2rem 0;}
-.pdf-sec-title{font-family:"Bebas Neue",sans-serif;font-size:1rem;letter-spacing:2px;color:var(--rust);margin-bottom:1.5rem;}
-.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
-.pdf-fig{margin:0;}
-.pdf-cap{font-family:"DM Mono",monospace;font-size:.68rem;color:var(--muted);margin-top:.4rem;text-align:center;display:block;}
-.pdf-pre{font-family:"DM Mono",monospace;font-size:.73rem;color:var(--muted);line-height:1.6;white-space:pre-wrap;word-break:break-word;background:var(--paper);border:1px solid var(--border);border-left:3px solid var(--blue);padding:1rem;border-radius:3px;margin-top:1rem;}
-.bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:2rem 3rem 3rem;border-top:1px solid var(--border);flex-wrap:wrap;gap:1rem;max-width:960px;margin:0 auto;}
-.bnav-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.4rem;border:1px solid var(--border);border-radius:2px;text-decoration:none;font-family:"Bebas Neue",sans-serif;font-size:.95rem;letter-spacing:1px;color:var(--ink);background:var(--paper);transition:all .2s;}
+.card-body code{font-family:"DM Mono",monospace;font-size:.8rem;background:var(--paper);padding:1px 4px;border-radius:2px;color:var(--blue);}
+
+/* ── FEATURE LIST ── */
+.feature-list{display:grid;gap:.7rem;margin:1rem 0;}
+.feature-item{background:var(--cream);border:1px solid var(--border);border-radius:4px;padding:.9rem 1.2rem;display:grid;grid-template-columns:160px 1fr;gap:1rem;align-items:start;}
+.feature-key{font-family:"DM Mono",monospace;font-size:.75rem;color:var(--rust);line-height:1.5;padding-top:.15rem;font-weight:500;}
+.feature-val{font-size:.87rem;color:var(--muted);line-height:1.65;}
+.feature-val strong{color:var(--ink);}
+.feature-val code{font-family:"DM Mono",monospace;font-size:.78rem;color:var(--blue);background:var(--paper);padding:1px 4px;border-radius:2px;}
+
+/* ── FSM STATES ── */
+.fsm-grid{display:grid;gap:.7rem;margin:1rem 0;}
+.fsm-state{background:var(--cream);border:1px solid var(--border);border-radius:4px;padding:.9rem 1.2rem;display:grid;grid-template-columns:200px 1fr;gap:1rem;}
+.fsm-badge{display:inline-flex;align-items:center;gap:.5rem;font-family:"Bebas Neue",sans-serif;font-size:.95rem;letter-spacing:.5px;}
+.fsm-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.fsm-trigger{font-family:"DM Mono",monospace;font-size:.68rem;color:var(--muted);margin-top:.3rem;}
+.fsm-body{font-size:.87rem;color:var(--muted);line-height:1.65;}
+.fsm-body strong{color:var(--ink);}
+
+/* ── ATTRIBUTE BLOCKS ── */
+.attr-block{border:1px solid var(--border);border-radius:4px;overflow:hidden;margin:.8rem 0;}
+.attr-header{display:flex;align-items:center;gap:.8rem;padding:.7rem 1.2rem;background:var(--ink);flex-wrap:wrap;}
+.attr-rank{font-family:"DM Mono",monospace;font-size:.7rem;color:var(--muted);background:rgba(255,255,255,.1);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;}
+.attr-name{font-family:"Bebas Neue",sans-serif;font-size:1rem;letter-spacing:1px;color:var(--gold);flex-shrink:0;}
+.attr-rule{font-size:.78rem;color:rgba(255,255,255,.4);flex:1;}
+.attr-scope{font-family:"DM Mono",monospace;font-size:.65rem;padding:.15rem .6rem;border-radius:10px;flex-shrink:0;}
+.scope-cisco{background:rgba(122,58,139,.3);color:#c4a0f0;}
+.scope-as{background:rgba(42,107,58,.3);color:#7de8a0;}
+.scope-global{background:rgba(26,58,107,.3);color:#7eb3ff;}
+.scope-local{background:rgba(255,255,255,.08);color:rgba(255,255,255,.4);}
+.attr-body{padding:1rem 1.2rem;background:var(--cream);}
+.attr-body p{font-size:.87rem;color:var(--muted);line-height:1.7;margin-bottom:.7rem;}
+.attr-body p:last-child{margin-bottom:0;}
+.attr-body p strong{color:var(--ink);}
+.attr-body code{font-family:"DM Mono",monospace;font-size:.78rem;color:var(--blue);background:var(--paper);padding:1px 4px;border-radius:2px;}
+
+/* ── PROTO BLOCKS ── */
+.proto-block{border:1px solid var(--border);border-radius:4px;overflow:hidden;margin:.8rem 0;}
+.proto-header{display:flex;align-items:center;gap:.8rem;padding:.7rem 1.2rem;border-bottom:1px solid var(--border);}
+.proto-header.gray{background:var(--cream);}
+.proto-header.blue{background:var(--blue-light);}
+.proto-header.teal{background:var(--green-light);}
+.proto-tag{font-family:"Bebas Neue",sans-serif;font-size:.95rem;letter-spacing:1px;}
+.proto-header.gray .proto-tag{color:var(--muted);}
+.proto-header.blue .proto-tag{color:var(--blue);}
+.proto-header.teal .proto-tag{color:var(--green);}
+.proto-examples{font-size:.78rem;color:var(--muted);}
+.proto-body{padding:1rem 1.2rem;background:#fff;}
+.proto-body p{font-size:.87rem;color:var(--muted);line-height:1.7;margin-bottom:.7rem;}
+.proto-body p:last-child{margin-bottom:0;}
+.proto-body p strong{color:var(--ink);}
+
+/* ── TABLES ── */
+.ref-table{width:100%;border-collapse:collapse;font-size:.85rem;margin:.8rem 0;}
+.ref-table th{background:var(--ink);color:#fff;font-family:"Bebas Neue",sans-serif;font-size:.9rem;letter-spacing:1.5px;padding:.65rem 1rem;text-align:left;}
+.ref-table td{padding:.65rem 1rem;border-bottom:1px solid var(--border);color:var(--muted);}
+.ref-table td:first-child{color:var(--ink);}
+.ref-table td:nth-child(2){font-family:"DM Mono",monospace;color:var(--blue);}
+.ref-table tr:nth-child(even) td{background:rgba(0,0,0,.025);}
+.ref-table tr:last-child td{border-bottom:none;}
+
+/* ── TERMINAL / CODE ── */
+.terminal{background:#0d1f17;border:1px solid #1c3a2a;border-radius:4px;overflow:hidden;font-family:"DM Mono",monospace;margin:.8rem 0;}
+.terminal-bar{background:#102b20;padding:.4rem .9rem;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid #1c3a2a;}
+.t-dot{width:10px;height:10px;border-radius:50%;}
+.terminal-bar span{font-size:.65rem;color:#4a6a58;letter-spacing:.5px;margin-left:.2rem;}
+.terminal pre{padding:1rem 1.2rem;font-size:.8rem;line-height:1.75;color:#a8c8b0;white-space:pre-wrap;word-break:break-word;}
+.t-cmd{color:#7eb3ff;}
+.t-val{color:#6fd4b0;}
+.t-kw{color:#c4a0f0;}
+.t-cmt{color:#3a5a48;}
+.t-out{color:#f0c870;}
+
+/* ── SUMMARY GRID ── */
+.summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem;margin:1rem 0;}
+.summary-card{background:var(--cream);border:1px solid var(--border);border-radius:4px;padding:.9rem 1.1rem;}
+.summary-card .sk{font-family:"DM Mono",monospace;font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.3rem;}
+.summary-card .sv{font-size:.87rem;color:var(--ink);font-weight:500;}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:2rem 3rem 2.5rem;border-top:1px solid var(--border);flex-wrap:wrap;gap:1rem;max-width:960px;margin:0 auto;}
+.bnav-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.4rem;border:1px solid var(--border);border-radius:2px;text-decoration:none;font-family:"Bebas Neue",sans-serif;font-size:.9rem;letter-spacing:1px;color:var(--ink);background:var(--paper);transition:all .2s;}
 .bnav-btn:hover{border-color:var(--rust);color:var(--rust);}
-.bnav-next{background:var(--rust);color:#fff !important;border-color:var(--rust);}.bnav-next:hover{background:#a83a1e !important;}
-.bnav-home{background:var(--ink);color:#fff !important;border-color:var(--ink);}.bnav-home:hover{background:#222 !important;}
-footer{background:var(--ink);color:#555;padding:1.5rem 3rem;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #222;font-family:"DM Mono",monospace;font-size:.7rem;margin-top:2rem;}
+.bnav-next{background:var(--rust);color:#fff !important;border-color:var(--rust);}
+.bnav-next:hover{background:#a83a1e !important;}
+.bnav-home{background:var(--ink);color:#fff !important;border-color:var(--ink);}
+.bnav-home:hover{background:#222 !important;}
+
+/* ── FOOTER ── */
+footer{background:var(--ink);color:#555;padding:1.5rem 3rem;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #222;font-family:"DM Mono",monospace;font-size:.7rem;margin-top:0;}
 .footer-brand{font-family:"Bebas Neue",sans-serif;font-size:1rem;letter-spacing:2px;color:#333;}
 .footer-brand em{color:var(--rust);font-style:normal;}
-@media(max-width:768px){.two-col,.three-col,.pdf-grid{grid-template-columns:1fr;}.sec{padding:1.5rem;}.bottom-nav{padding:1.5rem;}}
-</style></head><body>
-<div id="course-navbar"><a class="cnav-home" href="index.html">⌂ HOME</a><div class="cnav-module">MODULE 14 / 15 &nbsp; <strong>BASIC BGP</strong></div><a class="cnav-arrow" href="module13_static-route.html">← 13</a><a class="cnav-arrow cnav-next" href="module15_basic-mpls.html">15 →</a><div class="cnav-progress" style="width:93%"></div></div>
-<div class="hero">
-  <div class="hero-kicker">// Module 14 · Day 2 — 04 June 2026</div>
-  <h1>BASIC <em>BGP</em></h1>
-  <h1>Page Under Construction<em>We will be back soon</em></h1>
-  <span class="hero-date">📅 04 June 2026</span>
-  <div class="prog-wrap"><div class="prog-bar" style="width:93.3%"></div></div>
 
-<footer><div class="footer-brand">NETWORK <em>MAINTENANCE</em></div><div>Module 14 · Basic BGP · CATS Training Reference</div></footer>
-</script>
-
-<style id="bnav-css">
-.bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:2rem 3rem 3rem;border-top:1px solid var(--border,#d0cab8);flex-wrap:wrap;gap:1rem;max-width:1100px;margin:0 auto;}
-.bnav-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.4rem;border:1px solid var(--border,#d0cab8);border-radius:2px;text-decoration:none;font-family:"Bebas Neue",sans-serif;font-size:.95rem;letter-spacing:1px;color:var(--ink,#0f1117);background:var(--paper,#f5f2eb);transition:all .2s;}
-.bnav-btn:hover{border-color:var(--rust,#c94a2a);color:var(--rust,#c94a2a);}
-.bnav-next{background:var(--rust,#c94a2a)!important;color:#fff!important;border-color:var(--rust,#c94a2a)!important;}
-.bnav-next:hover{background:#a83a1e!important;}
-.bnav-home{background:var(--ink,#0f1117)!important;color:#fff!important;border-color:var(--ink,#0f1117)!important;}
-.bnav-home:hover{background:#222!important;}
+@media(max-width:768px){
+  .two-col,.three-col,.summary-grid{grid-template-columns:1fr;}
+  .fsm-state,.feature-item{grid-template-columns:1fr;gap:.4rem;}
+  .sec{padding:1.5rem;}
+  .bottom-nav{padding:1.5rem;}
+  .hero{padding:2.5rem 1.5rem;}
+}
 </style>
-<div class="bottom-nav">
-  <a class="bnav-btn" href="module13_static-route.html">← Module 12</a>
-  <a class="bnav-btn bnav-home" href="index.html">⌂ Home</a>
-  <a class="bnav-btn bnav-next" href="module15_basic-mpls.html">Module 14 →</a>
+</head>
+<body>
+
+<!-- ── UPPER NAV ── -->
+<div id="course-navbar">
+  <a class="cnav-home" href="index.html">⌂ HOME</a>
+  <div class="cnav-module">MODULE 14 / 15 &nbsp; <strong>BASIC BGP</strong></div>
+  <a class="cnav-arrow" href="module13_static-route.html">← 13</a>
+  <a class="cnav-arrow cnav-next" href="module15_basic-mpls.html">15 →</a>
+  <div class="cnav-progress" style="width:93%"></div>
 </div>
-</body></html>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-kicker">// Module 14 / 15 — Border Gateway Protocol</div>
+  <h1>BASIC <em>BGP</em></h1>
+  <p>From Path-Vector fundamentals to AS structure, eBGP vs iBGP, FSM states, Attributes, and Cisco configuration — everything you need to understand how the Internet routes data.</p>
+  <div class="pill-row">
+    <span class="pill pill-blue">Path-Vector EGP</span>
+    <span class="pill pill-teal">TCP Port 179</span>
+    <span class="pill pill-blue">RFC 4271 (BGP-4)</span>
+    <span class="pill pill-teal">eBGP AD=20 · iBGP AD=200</span>
+    <span class="pill pill-purple">CCNP / CCIE Level</span>
+  </div>
+  <div class="prog-wrap"><div class="prog-bar" style="width:93%"></div></div>
+</div>
+
+<!-- ── TOC ── -->
+<div class="toc-wrap">
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#s1">What is BGP and What is Path-Vector?</a></li>
+      <li><a href="#s2">BGP Purpose and Key Features</a></li>
+      <li><a href="#s3">What is an Autonomous System (AS)?</a></li>
+      <li><a href="#s4">eBGP vs iBGP — Differences and Operation</a></li>
+      <li><a href="#s5">BGP Finite State Machine — 6 States</a></li>
+      <li><a href="#s6">BGP Message Types</a></li>
+      <li><a href="#s7">BGP Attributes and Best Path Selection</a></li>
+      <li><a href="#s8">Cisco Commands and Configuration Examples</a></li>
+      <li><a href="#s9">Summary</a></li>
+    </ol>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SECTION 1 — What is BGP
+     ════════════════════════════════════ -->
+<section class="sec" id="s1">
+  <div class="sec-hdr">
+    <div class="sec-num">01</div>
+    <div>
+      <div class="sec-tag">// Internet Routing</div>
+      <div class="sec-title">What is BGP and What is Path-Vector?</div>
+    </div>
+  </div>
+
+  <p class="lead">BGP (Border Gateway Protocol) is the standard routing protocol used to forward data packets across the Internet. It is an <strong>Exterior Gateway Protocol (EGP)</strong> — meaning it operates between different organisations, unlike OSPF or EIGRP which run within a single organisation (IGP).</p>
+  <p>Think of BGP as the <strong>"postal system of the Internet"</strong> — when sending data, BGP finds all possible paths and selects the best one, which typically means hopping across multiple Autonomous Systems.</p>
+
+  <h3>The 3 Types of Routing Protocols</h3>
+
+  <div class="proto-block">
+    <div class="proto-header gray">
+      <span class="proto-tag">Distance-Vector</span>
+      <span class="proto-examples">RIP · EIGRP · Used in small LANs</span>
+    </div>
+    <div class="proto-body">
+      <p>Imagine standing at a crossroads with a sign that reads "Bangkok — 200 km". The sign tells you the distance, but nothing about which provinces you pass through, where to turn, or whether there is a motorway.</p>
+      <p>A Distance-Vector router works the same way. It only knows: "destination 10.0.0.0 is 3 hops away — send out this interface." It has no idea which routers the packet passes through along the way.</p>
+      <p>Distance-Vector routers exchange information simply by telling their neighbours: "I can reach that destination with cost X." The neighbour adds 1 and passes it on — like a rumour spreading by word of mouth. The problem is that if a link fails, incorrect information can loop back and forth for a long time before everyone learns the truth (Routing Loop).</p>
+    </div>
+  </div>
+
+  <div class="proto-block">
+    <div class="proto-header blue">
+      <span class="proto-tag">Link-State</span>
+      <span class="proto-examples">OSPF · IS-IS · Used in enterprise / data centres</span>
+    </div>
+    <div class="proto-body">
+      <p>Instead of a roadside sign, imagine you have a GPS with the complete map of every road in the country — every road length, traffic level, and current closure. You can compute the best route instantly, and if a road closes the GPS recalculates immediately without waiting for anyone else.</p>
+      <p>A Link-State router works this way. Each router announces its own links to the entire network: "I am connected to these neighbours with these costs." Every router collects that data, builds an identical map, then each independently runs Dijkstra's Algorithm to compute the shortest path to every destination.</p>
+      <p>The result is that all routers share the same view of the network and respond to changes very quickly — ideal for medium-to-large single-organisation networks.</p>
+    </div>
+  </div>
+
+  <div class="proto-block">
+    <div class="proto-header teal">
+      <span class="proto-tag">Path-Vector</span>
+      <span class="proto-examples">BGP only · Used on the Internet / between ASes</span>
+    </div>
+    <div class="proto-body">
+      <p>Both Distance-Vector and Link-State share the same goal: "find the shortest path." But on the real Internet, the shortest path is not always the most important consideration.</p>
+      <p>Suppose you are an ISP with two paths to a destination. Path A is shorter but passes through a competitor's network — very expensive transit. Path B is slightly longer but uses a partner with a free peering agreement. Which do you choose? Path B, even though it is longer.</p>
+      <p>Distance-Vector and Link-State cannot make that decision — they do not even know "who" the path passes through. BGP, as a Path-Vector protocol, always attaches the full list of every AS on the route. For example: "network 8.8.8.0/24 reachable via AS200 → AS300 → AS400." This is called the <strong>AS_PATH</strong>, and it enables two things no other protocol can do:</p>
+      <p><strong>First</strong> — automatic loop prevention. If a router sees its own AS in the AS_PATH, the route has looped back and is discarded immediately without any special mechanism.</p>
+      <p><strong>Second</strong> — policy-based decisions. An admin can say "never select paths through a competitor's AS" or "prefer this AS as entry point for that traffic" — exactly what ISPs need because their business relationships are complex, not simply "take the shortest path."</p>
+    </div>
+  </div>
+
+  <div class="gif-wrap">
+    <div class="gif-hdr">AS_PATH — BGP knows the complete path across Autonomous Systems</div>
+    <div class="gif-stage dark">
+      <svg viewBox="0 0 700 120" xmlns="http://www.w3.org/2000/svg" style="font-family:'DM Mono',monospace;width:100%;max-width:700px;display:block;margin:0 auto;">
+        <defs>
+          <marker id="arr1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#d4a039" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+        <rect x="20" y="30" width="130" height="60" rx="8" fill="#1a1e2a" stroke="#252a38"/>
+        <text x="85" y="55" text-anchor="middle" font-size="11" fill="#7eb3ff" font-weight="600">AS 100</text>
+        <text x="85" y="72" text-anchor="middle" font-size="10" fill="#555f78">TRUE Internet</text>
+        <rect x="200" y="30" width="130" height="60" rx="8" fill="#1a1e2a" stroke="#252a38"/>
+        <text x="265" y="55" text-anchor="middle" font-size="11" fill="#c4a0f0" font-weight="600">AS 200</text>
+        <text x="265" y="72" text-anchor="middle" font-size="10" fill="#555f78">Internet Core</text>
+        <rect x="380" y="30" width="130" height="60" rx="8" fill="#1a1e2a" stroke="#252a38"/>
+        <text x="445" y="55" text-anchor="middle" font-size="11" fill="#6fd4b0" font-weight="600">AS 300</text>
+        <text x="445" y="72" text-anchor="middle" font-size="10" fill="#555f78">Cloudflare</text>
+        <rect x="560" y="30" width="120" height="60" rx="8" fill="#1a1e2a" stroke="#252a38"/>
+        <text x="620" y="55" text-anchor="middle" font-size="11" fill="#f0c870" font-weight="600">AS 400</text>
+        <text x="620" y="72" text-anchor="middle" font-size="10" fill="#555f78">Google</text>
+        <line x1="151" y1="60" x2="198" y2="60" stroke="#d4a039" stroke-width="1.5" marker-end="url(#arr1)"/>
+        <line x1="331" y1="60" x2="378" y2="60" stroke="#d4a039" stroke-width="1.5" marker-end="url(#arr1)"/>
+        <line x1="511" y1="60" x2="558" y2="60" stroke="#d4a039" stroke-width="1.5" marker-end="url(#arr1)"/>
+        <text x="350" y="110" text-anchor="middle" font-size="10" fill="#555f78">AS_PATH: 100 → 200 → 300 → 400  (BGP carries the full path)</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════
+     SECTION 2 — Purpose and Key Features
+     ════════════════════════════════════ -->
+<section class="sec" id="s2">
+  <div class="sec-hdr">
+    <div class="sec-num">02</div>
+    <div>
+      <div class="sec-tag">// Key Features</div>
+      <div class="sec-title">BGP Purpose and Key Features</div>
+    </div>
+  </div>
+
+  <p class="lead">BGP makes <strong>peering</strong> possible — the agreement between two networks to exchange routing information. Without BGP, networks in different organisations could never reach each other across the Internet.</p>
+
+  <div class="note">
+    <span class="note-label">Why does this sound contradictory?</span>
+    The confusion comes from "network" having multiple meanings. <strong>Within the same AS</strong> (e.g. inside AIS) BGP is not needed — OSPF is enough to route normally. But <strong>between different ASes</strong>, such as a computer on AIS accessing a website on AWS, there is no path without BGP because nothing tells the router "AWS is in this direction."
+  </div>
+
+  <h3>7 Key Features</h3>
+  <div class="feature-list">
+    <div class="feature-item">
+      <div class="feature-key">Inter-AS Connectivity</div>
+      <div class="feature-val">The heart of BGP — two ASes (e.g. TRUE and Cloudflare) agree to <strong>peer</strong> and exchange routing information. Both sides must configure matching parameters before they can communicate.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-key">Next-Hop Support</div>
+      <div class="feature-val">When BGP announces "network 8.8.8.0/24 is reachable," it must also specify <strong>which IP to send the packet to first</strong> (next-hop). For eBGP the next-hop is usually the peer router's IP. For iBGP the next-hop remains the original eBGP router's IP (use <code>next-hop-self</code> when needed).</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-key">BGP Speaker Coordination</div>
+      <div class="feature-val">Large ASes contain multiple BGP routers (BGP speakers). They must talk to each other via <strong>iBGP</strong> to keep a consistent routing table inside the AS — otherwise one router sends traffic left while another sends it right.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-key">Path Information</div>
+      <div class="feature-val">Every BGP route update carries an <strong>AS_PATH</strong> — e.g. "network 1.1.1.0/24 came via AS200→AS300→AS400." This serves two purposes: (1) loop prevention — if the router's own AS is in the path, the route is discarded; and (2) best-path comparison.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-key">Policy Support</div>
+      <div class="feature-val">BGP lets admins define: "accept this route? advertise that route? prefer this path over that one?" via <strong>route-maps, prefix-lists, communities</strong>. This is why large ISPs use BGP — they need precise traffic control, not just "shortest path."</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-key">Runs over TCP</div>
+      <div class="feature-val">BGP uses <strong>TCP Port 179</strong> as its transport — no need to build its own reliability mechanism. TCP guarantees that updates arrive in full and in order, unlike OSPF/EIGRP which use multicast directly.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-key">CIDR &amp; MD5 Security</div>
+      <div class="feature-val">BGP supports <strong>Classless Inter-Domain Routing (CIDR)</strong> — e.g. 10.0.0.0/22 can be advertised instead of 4 separate networks. It also supports MD5 authentication between peers to prevent BGP hijacking.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════
+     SECTION 3 — Autonomous System
+     ════════════════════════════════════ -->
+<section class="sec" id="s3">
+  <div class="sec-hdr">
+    <div class="sec-num">03</div>
+    <div>
+      <div class="sec-tag">// AS Numbers</div>
+      <div class="sec-title">What is an Autonomous System (AS)?</div>
+    </div>
+  </div>
+
+  <p class="lead">An AS (Autonomous System) is a group of routers and networks under the control of a <strong>single organisation</strong> that shares a common routing policy. Each AS receives a unique <strong>ASN (AS Number)</strong> assigned by IANA/APNIC.</p>
+  <p>Organisations that hold an AS include ISPs, cloud providers, CDNs, universities, and large companies connected to multiple Internet providers (multi-homed).</p>
+
+  <table class="ref-table">
+    <thead>
+      <tr><th>Organisation</th><th>AS Number</th><th>Type</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>AIS Thailand</td><td>AS45430</td><td>ISP</td><td>Advanced Info Service</td></tr>
+      <tr><td>True Internet</td><td>AS7470</td><td>ISP</td><td>True Corporation</td></tr>
+      <tr><td>CAT Telecom</td><td>AS9931</td><td>ISP / Carrier</td><td>Manages Thailand backbone</td></tr>
+      <tr><td>Cloudflare</td><td>AS13335</td><td>CDN / Cloud</td><td>1.1.1.1 DNS</td></tr>
+      <tr><td>Google</td><td>AS15169</td><td>Tech Company</td><td>8.8.8.8 DNS</td></tr>
+      <tr><td>AWS</td><td>AS16509</td><td>Cloud</td><td>Amazon Web Services</td></tr>
+      <tr><td>Mahidol University</td><td>AS38040</td><td>University</td><td>Education AS example</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note blue">
+    <span class="note-label">ASN Ranges</span>
+    <strong>Public ASN (1–64511)</strong> — used on the real Internet; must be obtained from IANA.<br>
+    <strong>Private ASN (64512–65535)</strong> — used internally; no registration needed. Like private IP addresses (192.168.x.x) used in labs.
+  </div>
+</section>
+
+<!-- ════════════════════════════════════
+     SECTION 4 — eBGP vs iBGP
+     ════════════════════════════════════ -->
+<section class="sec" id="s4">
+  <div class="sec-hdr">
+    <div class="sec-num">04</div>
+    <div>
+      <div class="sec-tag">// Session Types</div>
+      <div class="sec-title">eBGP vs iBGP</div>
+    </div>
+  </div>
+
+  <p class="lead">BGP has two forms depending on whether the session is within the same AS or between different ASes.</p>
+
+  <div class="gif-wrap">
+    <div class="gif-hdr">eBGP between AS 100 and AS 200 — iBGP within each AS</div>
+    <div class="gif-stage dark">
+      <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" style="font-family:'DM Mono',monospace;width:100%;max-width:700px;display:block;margin:0 auto;">
+        <defs>
+          <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#6fd4b0" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="arr3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#c4a0f0" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="arr4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#f0c870" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+        <!-- AS 100 -->
+        <rect x="20" y="20" width="285" height="260" rx="12" fill="#13161e" stroke="#1a3a5e" stroke-width="1"/>
+        <text x="162" y="44" text-anchor="middle" font-size="11" fill="#7eb3ff" font-weight="600">AS 100 — TRUE Internet</text>
+        <rect x="50" y="65" width="105" height="52" rx="6" fill="#1a1e2a" stroke="#2a1f4a"/>
+        <text x="102" y="87" text-anchor="middle" font-size="12" fill="#c4a0f0" font-weight="600">R1</text>
+        <text x="102" y="104" text-anchor="middle" font-size="9" fill="#555f78">BGP speaker</text>
+        <rect x="165" y="185" width="105" height="52" rx="6" fill="#1a1e2a" stroke="#2a1f4a"/>
+        <text x="217" y="207" text-anchor="middle" font-size="12" fill="#c4a0f0" font-weight="600">R2</text>
+        <text x="217" y="224" text-anchor="middle" font-size="9" fill="#555f78">BGP speaker</text>
+        <line x1="130" y1="108" x2="190" y2="187" stroke="#c4a0f0" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr3)"/>
+        <rect x="115" y="138" width="44" height="18" rx="4" fill="#2a1f4a"/>
+        <text x="137" y="150" text-anchor="middle" font-size="9" fill="#c4a0f0">iBGP</text>
+        <!-- AS 200 -->
+        <rect x="395" y="20" width="285" height="260" rx="12" fill="#13161e" stroke="#0d3328" stroke-width="1"/>
+        <text x="537" y="44" text-anchor="middle" font-size="11" fill="#6fd4b0" font-weight="600">AS 200 — AIS</text>
+        <rect x="425" y="65" width="105" height="52" rx="6" fill="#1a1e2a" stroke="#0d3328"/>
+        <text x="477" y="87" text-anchor="middle" font-size="12" fill="#6fd4b0" font-weight="600">R3</text>
+        <text x="477" y="104" text-anchor="middle" font-size="9" fill="#555f78">BGP speaker</text>
+        <rect x="545" y="185" width="105" height="52" rx="6" fill="#1a1e2a" stroke="#0d3328"/>
+        <text x="597" y="207" text-anchor="middle" font-size="12" fill="#6fd4b0" font-weight="600">R4</text>
+        <text x="597" y="224" text-anchor="middle" font-size="9" fill="#555f78">BGP speaker</text>
+        <line x1="505" y1="108" x2="565" y2="187" stroke="#6fd4b0" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr2)"/>
+        <rect x="515" y="138" width="44" height="18" rx="4" fill="#0d3328"/>
+        <text x="537" y="150" text-anchor="middle" font-size="9" fill="#6fd4b0">iBGP</text>
+        <!-- eBGP -->
+        <line x1="272" y1="211" x2="393" y2="108" stroke="#f0c870" stroke-width="2" marker-end="url(#arr4)"/>
+        <rect x="296" y="145" width="90" height="28" rx="5" fill="#2a1e00"/>
+        <text x="341" y="157" text-anchor="middle" font-size="11" fill="#f0c870" font-weight="600">eBGP</text>
+        <text x="341" y="169" text-anchor="middle" font-size="9" fill="#8b6020">Different AS · AD=20</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-head gold">eBGP — External BGP</div>
+      <div class="card-body">
+        <strong>Between different ASes.</strong> Administrative Distance = 20 (high trust). Peers must be directly connected (or use <code>ebgp-multihop</code>). AS_PATH is extended every time the route crosses an AS. Think of it as "international diplomacy."
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head blue">iBGP — Internal BGP</div>
+      <div class="card-body">
+        <strong>Within the same AS.</strong> Administrative Distance = 200 (lower trust than IGP). Used because large ASes have multiple BGP routers that all need to share eBGP-learned routes. Key rule: routes from an iBGP peer are <strong>not</strong> forwarded to another iBGP peer (loop prevention).
+      </div>
+    </div>
+  </div>
+
+  <div class="note blue">
+    <span class="note-label">When is iBGP required?</span>
+    A small AS with only one BGP router does not need iBGP at all — a single eBGP session to the outside world is sufficient. iBGP only becomes necessary when an AS has <strong>multiple BGP routers</strong> that need to share the same routes internally.
+  </div>
+</section>
+
+<!-- ════════════════════════════════════
+     SECTION 5 — BGP FSM
+     ════════════════════════════════════ -->
+<section class="sec" id="s5">
+  <div class="sec-hdr">
+    <div class="sec-num">05</div>
+    <div>
+      <div class="sec-tag">// Session States</div>
+      <div class="sec-title">BGP Finite State Machine — 6 States</div>
+    </div>
+  </div>
+
+  <p class="lead">The FSM (Finite State Machine) is the internal mechanism that runs every time a BGP router tries to establish a neighbour relationship. Every time you enter <code style="font-family:'DM Mono',monospace;font-size:.82rem;color:var(--blue)">neighbor x.x.x.x remote-as YYY</code> on Cisco, the FSM starts immediately.</p>
+
+  <div class="fsm-grid">
+    <div class="fsm-state">
+      <div>
+        <div class="fsm-badge"><span class="fsm-dot" style="background:var(--muted)"></span><span style="color:var(--muted)">1. Idle</span></div>
+        <div class="fsm-trigger">Just booted / BGP reset</div>
+      </div>
+      <div class="fsm-body">BGP is inactive. It rejects all incoming connections and waits for a start event.<br><strong>Analogy:</strong> A phone that is switched off — no calls can get through.</div>
+    </div>
+    <div class="fsm-state">
+      <div>
+        <div class="fsm-badge"><span class="fsm-dot" style="background:var(--blue)"></span><span style="color:var(--blue)">2. Connect</span></div>
+        <div class="fsm-trigger">Initiates TCP connect to Port 179</div>
+      </div>
+      <div class="fsm-body">Waiting for TCP 3-way handshake (SYN → SYN-ACK → ACK). Success → OpenSent. Failure → Active.<br><strong>Analogy:</strong> Dialling a friend and waiting for them to pick up.</div>
+    </div>
+    <div class="fsm-state">
+      <div>
+        <div class="fsm-badge"><span class="fsm-dot" style="background:var(--rust)"></span><span style="color:var(--rust)">3. Active</span></div>
+        <div class="fsm-trigger">TCP failed — retrying</div>
+      </div>
+      <div class="fsm-body">Repeatedly attempting TCP connection. <strong>Stuck in Active for a long time</strong> usually means a firewall is blocking port 179 or the neighbour IP is wrong.<br><strong>Analogy:</strong> Calling over and over but nobody answers.</div>
+    </div>
+    <div class="fsm-state">
+      <div>
+        <div class="fsm-badge"><span class="fsm-dot" style="background:#7a3a8b)"></span><span style="color:var(--gold)">4. OpenSent</span></div>
+        <div class="fsm-trigger">TCP established — OPEN message sent</div>
+      </div>
+      <div class="fsm-body">OPEN contains: BGP version (4), AS number, Hold Time, Router ID. Waiting for OPEN from the peer. Any error → NOTIFICATION sent → back to Idle.<br><strong>Analogy:</strong> Both sides shaking hands and introducing themselves.</div>
+    </div>
+    <div class="fsm-state">
+      <div>
+        <div class="fsm-badge"><span class="fsm-dot" style="background:var(--gold)"></span><span style="color:var(--gold)">5. OpenConfirm</span></div>
+        <div class="fsm-trigger">OPEN accepted — waiting for KEEPALIVE</div>
+      </div>
+      <div class="fsm-body">Waiting for a KEEPALIVE to confirm the session. Received → Established. Hold Timer expires first → back to Idle.<br><strong>Analogy:</strong> After introductions, waiting for a confirming nod: "OK, we're neighbours."</div>
+    </div>
+    <div class="fsm-state">
+      <div>
+        <div class="fsm-badge"><span class="fsm-dot" style="background:var(--green)"></span><span style="color:var(--green)">6. Established</span></div>
+        <div class="fsm-trigger">KEEPALIVE received — Session UP!</div>
+      </div>
+      <div class="fsm-body">The goal state. UPDATE messages exchange routes. KEEPALIVE sent every 60 seconds. If Hold Timer (180 s) expires → back to Idle.<br><strong>Analogy:</strong> Now friends — start sharing routes freely.</div>
+    </div>
+  </div>
+
+  <div class="note green">
+    <span class="note-label">Troubleshooting with State</span>
+    Run <code style="font-family:'DM Mono',monospace;font-size:.78rem;">show ip bgp summary</code> and check the State/PfxRcd column. If you see <strong>Active</strong> — stuck at state 3 (TCP unreachable — check firewall / IP). If you see a number such as <strong>1</strong> — session is Established and 1 route has been learned.
+  </div>
+</section>
+
+<!-- ════════════════════════════════════
+     SECTION 6 — BGP Messages
+     ════════════════════════════════════ -->
+<section class="sec" id="s6">
+  <div class="sec-hdr">
+    <div class="sec-num">06</div>
+    <div>
+      <div class="sec-tag">// Protocol Messages</div>
+      <div class="sec-title">BGP Message Types</div>
+    </div>
+  </div>
+
+  <div class="feature-list">
+    <div class="feature-item">
+      <div class="feature-key" style="color:var(--blue)">OPEN</div>
+      <div class="feature-val">Sent after TCP is established to initiate the BGP session. Contains: BGP version, AS number, Hold Time, BGP Identifier (Router ID).</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-key" style="color:var(--green)">KEEPALIVE</div>
+      <div class="feature-val">Sent every 60 seconds (default) to confirm the session is still alive. If no KEEPALIVE is received within the Hold Timer (180 s) — the session is torn down.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-key" style="color:var(--gold)">UPDATE</div>
+      <div class="feature-val">Carries routing information — announces new networks (Advertise) or withdraws existing ones (Withdraw). Always includes Path Attributes.</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-key" style="color:var(--rust)">NOTIFICATION</div>
+      <div class="feature-val">Sent when an error occurs — reports the reason and immediately closes the session. The router resets to Idle. Examples: "AS number mismatch", "Hold Timer expired."</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════
+     SECTION 7 — BGP Attributes
+     ════════════════════════════════════ -->
+<section class="sec" id="s7">
+  <div class="sec-hdr">
+    <div class="sec-num">07</div>
+    <div>
+      <div class="sec-tag">// Path Selection</div>
+      <div class="sec-title">BGP Attributes and Best Path Selection</div>
+    </div>
+  </div>
+
+  <p class="lead">When BGP knows multiple paths to the same destination, it applies the <strong>Best Path Selection Algorithm</strong> — comparing attributes one by one in order. If two routes tie on one attribute, the comparison moves to the next.</p>
+
+  <div class="note purple">
+    <span class="note-label">Selection Order — W·L·L·A·O·M·E·I</span>
+    <strong>W</strong>eight → <strong>L</strong>ocal Preference → <strong>L</strong>ocally Originated → <strong>A</strong>S_PATH → <strong>O</strong>rigin → <strong>M</strong>ED → <strong>E</strong>BGP over iBGP → <strong>I</strong>GP Metric
+  </div>
+
+  <div class="attr-block">
+    <div class="attr-header">
+      <span class="attr-rank">1</span>
+      <span class="attr-name">Weight</span>
+      <span class="attr-rule">Higher is better · default 32768 (local) / 0 (learned)</span>
+      <span class="attr-scope scope-cisco">Cisco only</span>
+    </div>
+    <div class="attr-body">
+      <p>Weight is a Cisco-proprietary attribute — it is not part of the BGP standard and therefore exists only on Cisco routers. Critically, it is <strong>never advertised to any neighbour</strong>; it only affects the router where it is configured.</p>
+      <p><strong>Use case:</strong> Force a single router to prefer one upstream ISP over another without affecting any other router in the AS. Set a higher Weight for routes from the preferred ISP.</p>
+      <p><strong>Configuration:</strong> <code>neighbor x.x.x.x weight 500</code> — applies to all routes from that neighbour. Use a route-map to apply it selectively per prefix.</p>
+      <p><strong>Verify:</strong> <code>show ip bgp x.x.x.x</code> (detailed) shows the Weight of each path.</p>
+    </div>
+  </div>
+
+  <div class="attr-block">
+    <div class="attr-header">
+      <span class="attr-rank">2</span>
+      <span class="attr-name">Local Preference</span>
+      <span class="attr-rule">Higher is better · default 100</span>
+      <span class="attr-scope scope-as">Within same AS</span>
+    </div>
+    <div class="attr-body">
+      <p>Local Preference tells every router in the AS: "which exit point should we use to leave our AS?" Higher value = preferred. It is shared among all BGP routers within the AS via iBGP but is <strong>never sent to other ASes</strong>.</p>
+      <p><strong>Use case:</strong> Your AS connects to two ISPs — ISP-A and ISP-B. You want all traffic to exit via ISP-A regardless of which internal router originates it. Set Local Preference for ISP-A routes to 200 and leave ISP-B at 100. Every router in the AS will unanimously choose ISP-A. This is the key difference from Weight, which only affects one router.</p>
+      <p><strong>Configuration:</strong> Use a route-map with <code>set local-preference 200</code>, then apply it with <code>neighbor x.x.x.x route-map NAME in</code>.</p>
+      <p><strong>Verify:</strong> <code>show ip bgp</code> — column <strong>LocPrf</strong>.</p>
+    </div>
+  </div>
+
+  <div class="attr-block">
+    <div class="attr-header">
+      <span class="attr-rank">3</span>
+      <span class="attr-name">Locally Originated</span>
+      <span class="attr-rule">network / aggregate preferred over redistribute</span>
+      <span class="attr-scope scope-local">Local only</span>
+    </div>
+    <div class="attr-body">
+      <p>If Weight and Local Preference are equal, BGP checks whether either route was originated by this router itself. Routes injected via the <code>network</code> command or aggregation are preferred over routes that were redistributed from another protocol.</p>
+      <p><strong>In practice</strong> this attribute rarely plays a role because a single router almost never originates the same prefix via two different methods simultaneously.</p>
+    </div>
+  </div>
+
+  <div class="attr-block">
+    <div class="attr-header">
+      <span class="attr-rank">4</span>
+      <span class="attr-name">AS_PATH</span>
+      <span class="attr-rule">Shorter (fewer ASes) is better</span>
+      <span class="attr-scope scope-global">Cross-AS</span>
+    </div>
+    <div class="attr-body">
+      <p>AS_PATH is the ordered list of every AS the route has passed through. For example, a route originating in AS400 arriving at AS100 via AS200 and AS300 has AS_PATH "300 200 100" (newest first). BGP prefers the route with the <strong>shorter AS_PATH</strong> — fewer ASes traversed.</p>
+      <p><strong>Loop prevention:</strong> If a router sees its own AS number in an incoming AS_PATH, it knows the route has looped back and discards it immediately — automatically, with no extra mechanism needed.</p>
+      <p><strong>AS_PATH Prepending:</strong> A widely used multi-homing technique where you deliberately repeat your own AS number to make a path appear longer, steering inbound traffic from the Internet toward a preferred link. <code>set as-path prepend 65001 65001 65001</code> adds your AS three times.</p>
+      <p><strong>Verify:</strong> <code>show ip bgp</code> — column <strong>Path</strong> shows the AS numbers traversed.</p>
+    </div>
+  </div>
+
+  <div class="attr-block">
+    <div class="attr-header">
+      <span class="attr-rank">5</span>
+      <span class="attr-name">Origin</span>
+      <span class="attr-rule">i (IGP) &gt; e (EGP) &gt; ? (Incomplete)</span>
+      <span class="attr-scope scope-global">Cross-AS</span>
+    </div>
+    <div class="attr-body">
+      <p>Origin indicates how the route was originally injected into BGP. There are three possible values:</p>
+      <p><strong>i (IGP)</strong> — Someone used the <code>network</code> command to inject this route directly. Most trustworthy — it means the network owner deliberately announced it.</p>
+      <p><strong>e (EGP)</strong> — Came from the legacy EGP protocol (predecessor of BGP, now obsolete). Rarely seen in modern networks.</p>
+      <p><strong>? (Incomplete)</strong> — Route was redistributed into BGP from another protocol (e.g. OSPF or a static route). Least trusted because BGP does not know the exact original source.</p>
+      <p><strong>Configuration:</strong> Normally not set directly — it is assigned automatically. Using <code>network</code> gives you <code>i</code>; redistribution gives you <code>?</code>.</p>
+      <p><strong>Verify:</strong> <code>show ip bgp</code> — the last character in the <strong>Path</strong> column, e.g. <code>100 200 i</code> means AS_PATH is 100, 200 and Origin is IGP.</p>
+    </div>
+  </div>
+
+  <div class="attr-block">
+    <div class="attr-header">
+      <span class="attr-rank">6</span>
+      <span class="attr-name">MED (Multi-Exit Discriminator)</span>
+      <span class="attr-rule">Lower is better · default 0</span>
+      <span class="attr-scope scope-as">Between ASes</span>
+    </div>
+    <div class="attr-body">
+      <p>MED is a "suggestion" sent outward to a neighbouring AS: "if you want to send traffic to us, please use this entry point." Lower value = preferred. Default is 0.</p>
+      <p><strong>Use case:</strong> Your AS has two links into AS200 — via R1 and R2. You want AS200 to send inbound traffic through R1. Set MED on R1 to 10 and on R2 to 100. AS200 sees that R1 has the lower MED and prefers it.</p>
+      <p>Note: MED controls <strong>inbound traffic</strong> (traffic entering your AS), while Local Preference controls <strong>outbound traffic</strong> (traffic leaving your AS). MED is only compared between routes from the same neighbouring AS.</p>
+      <p><strong>Configuration:</strong> Route-map with <code>set metric 10</code>, applied outbound: <code>neighbor x.x.x.x route-map NAME out</code>.</p>
+      <p><strong>Verify:</strong> <code>show ip bgp</code> — column <strong>Metric</strong>.</p>
+    </div>
+  </div>
+
+  <div class="attr-block">
+    <div class="attr-header">
+      <span class="attr-rank">7</span>
+      <span class="attr-name">eBGP over iBGP</span>
+      <span class="attr-rule">eBGP always preferred over iBGP</span>
+      <span class="attr-scope scope-local">Fixed rule</span>
+    </div>
+    <div class="attr-body">
+      <p>This is a hard rule — not a configurable attribute. If the same prefix is learned from both an eBGP peer and an iBGP peer, BGP always selects the eBGP route.</p>
+      <p>The reason: eBGP routes come directly from outside the AS, so the information is considered more accurate. An iBGP route has already been relayed one hop inside the AS. This is consistent with the Administrative Distance values: eBGP = 20, iBGP = 200.</p>
+    </div>
+  </div>
+
+  <div class="attr-block">
+    <div class="attr-header">
+      <span class="attr-rank">8</span>
+      <span class="attr-name">IGP Metric (Lowest cost to Next-Hop)</span>
+      <span class="attr-rule">Lower is better</span>
+      <span class="attr-scope scope-local">Local</span>
+    </div>
+    <div class="attr-body">
+      <p>When all previous attributes are equal, BGP compares how far the next-hop of each route is from this router in terms of IGP cost (e.g. OSPF cost or EIGRP metric), and prefers the route whose next-hop is closest.</p>
+      <p><strong>In practice:</strong> This is usually an automatic tiebreaker — no manual configuration needed. It matters in an AS with multiple iBGP routers each pointing to different next-hops; BGP picks the one reachable at lowest IGP cost.</p>
+      <p><strong>Verify:</strong> <code>show ip bgp x.x.x.x</code> (detailed) shows "metric from next hop."</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <span class="note-label">Attribute Configuration — The Common Tool</span>
+    Most attributes are set using <strong>route-maps</strong> — the primary BGP policy tool. A route-map is attached to a neighbour with <code>neighbor x.x.x.x route-map NAME in/out</code>, then uses <code>set</code> commands inside the route-map to assign attribute values and <code>match</code> commands to target specific prefixes.
+  </div>
+</section>
+
+<!-- ════════════════════════════════════
+     SECTION 8 — Cisco Config
+     ════════════════════════════════════ -->
+<section class="sec" id="s8">
+  <div class="sec-hdr">
+    <div class="sec-num">08</div>
+    <div>
+      <div class="sec-tag">// Cisco IOS</div>
+      <div class="sec-title">Cisco Commands and Configuration Examples</div>
+    </div>
+  </div>
+
+  <h3>Basic Commands</h3>
+  <div class="terminal">
+    <div class="terminal-bar"><span class="t-dot" style="background:#ff5f57"></span><span class="t-dot" style="background:#febc2e"></span><span class="t-dot" style="background:#28c840"></span><span>Cisco IOS — BGP Basic</span></div>
+    <pre><span class="t-cmt">! Start BGP process</span>
+<span class="t-cmd">router bgp</span> <span class="t-val">&lt;AS-number&gt;</span>
+
+<span class="t-cmt">! Define a neighbour / peer</span>
+<span class="t-cmd">neighbor</span> <span class="t-val">&lt;ip-address&gt;</span> <span class="t-kw">remote-as</span> <span class="t-val">&lt;AS-number&gt;</span>
+
+<span class="t-cmt">! Advertise a network into BGP</span>
+<span class="t-cmd">network</span> <span class="t-val">&lt;network&gt;</span> <span class="t-kw">mask</span> <span class="t-val">&lt;subnet-mask&gt;</span>
+
+<span class="t-cmt">! Set Router-ID manually</span>
+<span class="t-cmd">bgp router-id</span> <span class="t-val">&lt;ip-address&gt;</span>
+
+<span class="t-cmt">! iBGP — use loopback as session source</span>
+<span class="t-cmd">neighbor</span> <span class="t-val">&lt;ip&gt;</span> <span class="t-kw">update-source loopback 0</span></pre>
+  </div>
+
+  <h3>eBGP Example — R1 (AS65001) ↔ R2 (AS65002)</h3>
+  <div class="terminal">
+    <div class="terminal-bar"><span class="t-dot" style="background:#ff5f57"></span><span class="t-dot" style="background:#febc2e"></span><span class="t-dot" style="background:#28c840"></span><span>eBGP Configuration</span></div>
+    <pre><span class="t-cmt">! ==== R1 (AS 65001) ====</span>
+R1(config)# <span class="t-cmd">router bgp</span> <span class="t-val">65001</span>
+R1(config-router)# <span class="t-cmd">bgp router-id</span> <span class="t-val">1.1.1.1</span>
+R1(config-router)# <span class="t-cmd">neighbor</span> <span class="t-val">192.168.12.2</span> <span class="t-kw">remote-as</span> <span class="t-val">65002</span>
+R1(config-router)# <span class="t-cmd">network</span> <span class="t-val">10.1.0.0</span> <span class="t-kw">mask</span> <span class="t-val">255.255.0.0</span>
+R1(config-router)# <span class="t-cmd">no auto-summary</span>
+
+<span class="t-cmt">! ==== R2 (AS 65002) ====</span>
+R2(config)# <span class="t-cmd">router bgp</span> <span class="t-val">65002</span>
+R2(config-router)# <span class="t-cmd">bgp router-id</span> <span class="t-val">2.2.2.2</span>
+R2(config-router)# <span class="t-cmd">neighbor</span> <span class="t-val">192.168.12.1</span> <span class="t-kw">remote-as</span> <span class="t-val">65001</span>
+R2(config-router)# <span class="t-cmd">network</span> <span class="t-val">10.2.0.0</span> <span class="t-kw">mask</span> <span class="t-val">255.255.0.0</span>
+R2(config-router)# <span class="t-cmd">no auto-summary</span></pre>
+  </div>
+
+  <h3>iBGP Example — Using Loopback</h3>
+  <div class="terminal">
+    <div class="terminal-bar"><span class="t-dot" style="background:#ff5f57"></span><span class="t-dot" style="background:#febc2e"></span><span class="t-dot" style="background:#28c840"></span><span>iBGP Configuration</span></div>
+    <pre><span class="t-cmt">! R1 and R2 are in the same AS (65001)</span>
+R1(config)# <span class="t-cmd">interface loopback 0</span>
+R1(config-if)# <span class="t-cmd">ip address</span> <span class="t-val">1.1.1.1 255.255.255.255</span>
+
+R1(config)# <span class="t-cmd">router bgp</span> <span class="t-val">65001</span>
+R1(config-router)# <span class="t-cmd">neighbor</span> <span class="t-val">2.2.2.2</span> <span class="t-kw">remote-as</span> <span class="t-val">65001</span>  <span class="t-cmt">← same AS = iBGP</span>
+R1(config-router)# <span class="t-cmd">neighbor</span> <span class="t-val">2.2.2.2</span> <span class="t-kw">update-source loopback 0</span>
+R1(config-router)# <span class="t-cmd">network</span> <span class="t-val">10.1.1.0</span> <span class="t-kw">mask</span> <span class="t-val">255.255.255.0</span></pre>
+  </div>
+
+  <h3>Verification Commands</h3>
+  <div class="terminal">
+    <div class="terminal-bar"><span class="t-dot" style="background:#ff5f57"></span><span class="t-dot" style="background:#febc2e"></span><span class="t-dot" style="background:#28c840"></span><span>Verification</span></div>
+    <pre><span class="t-cmd">show ip bgp summary</span>         <span class="t-cmt">! BGP neighbour status overview</span>
+<span class="t-cmd">show ip bgp</span>                 <span class="t-cmt">! Full BGP routing table</span>
+<span class="t-cmd">show ip bgp neighbors</span>       <span class="t-cmt">! Detailed neighbour information</span>
+<span class="t-cmd">show ip route bgp</span>           <span class="t-cmt">! BGP routes in the routing table</span>
+<span class="t-cmd">clear ip bgp * soft</span>         <span class="t-cmt">! Soft reset (no session teardown)</span>
+<span class="t-cmd">debug ip bgp</span>                <span class="t-cmt">! BGP debug (caution: very verbose)</span></pre>
+  </div>
+
+  <h3>Sample Output — show ip bgp summary</h3>
+  <div class="terminal">
+    <div class="terminal-bar"><span class="t-dot" style="background:#ff5f57"></span><span class="t-dot" style="background:#febc2e"></span><span class="t-dot" style="background:#28c840"></span><span>show ip bgp summary</span></div>
+    <pre>R1# <span class="t-cmd">show ip bgp summary</span>
+BGP router identifier <span class="t-val">1.1.1.1</span>, local AS number <span class="t-val">65001</span>
+
+Neighbor        V    AS  MsgRcvd MsgSent   Up/Down  State/PfxRcd
+<span class="t-val">192.168.12.2</span>    4  65002       15      15  00:10:32        <span class="t-out">1</span>
+<span class="t-cmt">                                                      ↑ Established + 1 route learned</span></pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════
+     SECTION 9 — Summary
+     ════════════════════════════════════ -->
+<section class="sec" id="s9">
+  <div class="sec-hdr">
+    <div class="sec-num">09</div>
+    <div>
+      <div class="sec-tag">// Quick Reference</div>
+      <div class="sec-title">Summary</div>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="summary-card"><div class="sk">Protocol Type</div><div class="sv">Path-Vector, EGP</div></div>
+    <div class="summary-card"><div class="sk">Transport</div><div class="sv">TCP Port 179</div></div>
+    <div class="summary-card"><div class="sk">Administrative Distance</div><div class="sv">eBGP = 20 · iBGP = 200</div></div>
+    <div class="summary-card"><div class="sk">Standard</div><div class="sv">RFC 4271 (BGP-4)</div></div>
+    <div class="summary-card"><div class="sk">BGP FSM States</div><div class="sv">Idle → Connect → Active → OpenSent → OpenConfirm → Established</div></div>
+    <div class="summary-card"><div class="sk">BGP Messages</div><div class="sv">OPEN · KEEPALIVE · UPDATE · NOTIFICATION</div></div>
+    <div class="summary-card"><div class="sk">Use Cases</div><div class="sv">ISP Interconnect, Multi-homing, MPLS VPN, Internet routing</div></div>
+    <div class="summary-card"><div class="sk">Best Path Order</div><div class="sv">Weight → Local-Pref → AS-Path → Origin → MED → eBGP/iBGP → IGP</div></div>
+  </div>
+
+  <div class="note green" style="margin-top:1.5rem">
+    <span class="note-label">Next Topics to Study (CCNP Level)</span>
+    Route Reflector (solves iBGP full-mesh problem) · BGP Communities · Route Filtering (prefix-list, route-map) · BGP Confederation · BGP Multi-homing topology · MPLS L3 VPN with BGP
+  </div>
+</section>
+
+<!-- ── BOTTOM NAV ── -->
+<div class="bottom-nav">
+  <a class="bnav-btn" href="module13_static-route.html">← Module 13: Static Route</a>
+  <a class="bnav-btn bnav-home" href="index.html">⌂ HOME</a>
+  <a class="bnav-btn bnav-next" href="module15_basic-mpls.html">Module 15: Basic MPLS →</a>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <span class="footer-brand">NET<em>WORK</em> FUNDAMENTALS</span>
+  <span>Module 14 / 15 — Basic BGP · CATS Training</span>
+  <span>RFC 4271 · TCP/179</span>
+</footer>
+
+</body>
+</html>
