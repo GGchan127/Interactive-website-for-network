@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OSPF Complete Reference | Module 14</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0f1117;--paper:#f5f2eb;--cream:#ede9df;
+  --rust:#c94a2a;--rust-light:rgba(201,74,42,.08);
+  --blue:#1a3a6b;--blue-light:#e8eef8;
+  --gold:#d4a039;--green:#2a6b3a;--green-light:#e8f5eb;
+  --muted:#6b6560;--border:#d0cab8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--ink);font-family:"DM Sans",sans-serif;line-height:1.75;overflow-x:hidden;}
+body::before{content:"";position:fixed;inset:0;opacity:.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");pointer-events:none;z-index:999;}
+
+/* ── UPPER NAV ── */
+#course-navbar{position:sticky;top:0;z-index:9999;background:#0f1117;border-bottom:3px solid #c94a2a;display:flex;align-items:center;height:52px;position:relative;}
+#course-navbar a{text-decoration:none;}
+.cnav-home{padding:0 1.2rem;font-family:"Bebas Neue",sans-serif;font-size:1rem;letter-spacing:1.5px;color:#d4a039;height:52px;display:flex;align-items:center;border-right:1px solid rgba(255,255,255,.1);}
+.cnav-home:hover{background:rgba(212,160,57,.1);}
+.cnav-module{padding:0 1rem;font-family:"DM Mono",monospace;font-size:.68rem;letter-spacing:1px;color:rgba(255,255,255,.45);flex:1;}
+.cnav-module strong{color:#fff;font-family:"Bebas Neue",sans-serif;font-size:.9rem;letter-spacing:1px;}
+.cnav-progress{height:3px;background:#c94a2a;position:absolute;bottom:0;left:0;}
+.cnav-arrow{padding:0 1rem;font-family:"Bebas Neue",sans-serif;font-size:.85rem;letter-spacing:1px;color:rgba(255,255,255,.5);height:52px;display:flex;align-items:center;border-left:1px solid rgba(255,255,255,.1);}
+.cnav-arrow:hover{color:#fff;background:rgba(255,255,255,.05);}
+.cnav-next{background:#c94a2a;color:#fff !important;}.cnav-next:hover{background:#a83a1e !important;}
+
+/* ── HERO ── */
+.hero{background:var(--ink);color:#fff;padding:4rem 3rem 3rem;position:relative;overflow:hidden;}
+.hero::after{content:"OSPF";position:absolute;right:-10px;top:50%;transform:translateY(-50%);font-family:"Bebas Neue",sans-serif;font-size:10rem;color:rgba(255,255,255,.03);letter-spacing:4px;pointer-events:none;}
+.hero-kicker{font-family:"DM Mono",monospace;font-size:.7rem;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:.8rem;}
+.hero h1{font-family:"Bebas Neue",sans-serif;font-size:clamp(2.5rem,7vw,5rem);line-height:.95;letter-spacing:2px;margin-bottom:.8rem;}
+.hero h1 em{font-style:normal;color:var(--rust);}
+.hero p{color:#9a9590;font-size:.95rem;font-weight:300;max-width:600px;margin-bottom:1.2rem;}
+.pill-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;}
+.pill{font-family:"DM Mono",monospace;font-size:.68rem;padding:.25rem .7rem;border-radius:20px;border:1px solid;background:transparent;}
+.pill-blue{color:#7eb3ff;border-color:rgba(26,58,107,.6);}
+.pill-teal{color:#6fd4b0;border-color:rgba(42,107,80,.6);}
+.pill-gold{color:#f0c870;border-color:rgba(212,160,57,.5);}
+.pill-purple{color:#c4b0f8;border-color:rgba(140,110,200,.4);}
+.prog-wrap{margin-top:1.5rem;background:rgba(255,255,255,.1);border-radius:2px;height:3px;}
+.prog-bar{height:3px;background:var(--rust);border-radius:2px;}
+
+/* ── TOC ── */
+.toc-wrap{max-width:960px;margin:1.5rem auto 0;padding:0 3rem;}
+.toc{background:var(--cream);border:1px solid var(--border);border-radius:4px;padding:1rem 1.4rem;}
+.toc-title{font-family:"DM Mono",monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem;}
+.toc ol{padding-left:1.2rem;}
+.toc li{margin-bottom:.2rem;font-size:.87rem;}
+.toc a{color:var(--blue);text-decoration:none;}
+.toc a:hover{text-decoration:underline;color:var(--rust);}
+
+/* ── SECTION ── */
+.sec{max-width:960px;margin:0 auto;padding:2.5rem 3rem;border-bottom:1px solid var(--border);}
+.sec:last-of-type{border-bottom:none;}
+.sec-hdr{display:flex;align-items:baseline;gap:1rem;margin-bottom:1.5rem;}
+.sec-num{font-family:"Bebas Neue",sans-serif;font-size:3.5rem;color:var(--border);line-height:1;flex-shrink:0;}
+.sec-tag{font-family:"DM Mono",monospace;font-size:.65rem;color:var(--rust);letter-spacing:2px;text-transform:uppercase;margin-bottom:.2rem;}
+.sec-title{font-family:"Bebas Neue",sans-serif;font-size:1.8rem;letter-spacing:.5px;line-height:1.1;}
+.lead{color:var(--muted);max-width:720px;margin-bottom:1rem;font-size:.93rem;line-height:1.7;}
+.lead strong{color:var(--ink);}
+.sec p{color:var(--muted);margin-bottom:.8rem;font-size:.93rem;line-height:1.7;}
+.sec p strong{color:var(--ink);}
+.sec h3{font-family:"Bebas Neue",sans-serif;font-size:1.3rem;letter-spacing:.5px;margin:1.8rem 0 .8rem;color:var(--ink);}
+
+/* ── NOTES / CALLOUTS ── */
+.note{font-family:"DM Mono",monospace;font-size:.78rem;color:var(--muted);padding:.8rem 1rem;border:1px solid var(--border);border-left:3px solid var(--gold);margin:.8rem 0;line-height:1.65;border-radius:2px;}
+.note strong{color:var(--rust);}
+.note .note-lbl{display:block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem;opacity:.6;}
+.note code{font-family:"DM Mono",monospace;background:var(--cream);border:1px solid var(--border);color:var(--rust);padding:.05rem .3rem;border-radius:2px;font-size:.9em;}
+.note.blue{border-left-color:var(--blue);}
+.note.blue strong{color:var(--blue);}
+.note.green{border-left-color:var(--green);}
+.note.green strong{color:var(--green);}
+.note.warn{border-left-color:var(--rust);}
+.note.warn strong{color:var(--rust);}
+
+/* ── DIAGRAM PANELS ── */
+.gif-wrap{border:2px solid var(--border);border-radius:4px;overflow:hidden;margin:1.2rem 0;}
+.gif-hdr{background:var(--ink);color:var(--gold);padding:.5rem 1rem;font-family:"Bebas Neue",sans-serif;font-size:.82rem;letter-spacing:2px;display:flex;align-items:center;gap:.5rem;}
+.gif-hdr::before{content:"▶";color:var(--rust);font-size:.65rem;}
+.gif-stage{padding:1.5rem;background:#0f1117;display:flex;justify-content:center;overflow-x:auto;}
+.gif-stage svg{display:block;margin:0 auto;}
+
+/* ── CARDS ── */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1rem;margin:1rem 0;}
+.card{background:var(--cream);border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+.card-head{padding:.7rem 1.2rem;font-family:"Bebas Neue",sans-serif;font-size:1rem;letter-spacing:1.5px;color:#fff;}
+.card-head.blue{background:var(--blue);}
+.card-head.rust{background:var(--rust);}
+.card-head.green{background:var(--green);}
+.card-head.gold{background:var(--gold);color:var(--ink);}
+.card-head.dark{background:var(--ink);}
+.card-body{padding:1rem 1.2rem;font-size:.87rem;color:var(--muted);line-height:1.65;}
+.card-body strong{color:var(--ink);}
+.card-body code{font-family:"DM Mono",monospace;font-size:.78rem;background:var(--paper);border:1px solid var(--border);color:var(--rust);padding:1px 4px;border-radius:2px;}
+
+/* ── FEATURE CARDS (kp style) ── */
+.kp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.8rem;margin:1rem 0;}
+.kp{background:var(--cream);border:1px solid var(--border);border-radius:3px;padding:1rem;font-size:.87rem;display:flex;gap:.7rem;line-height:1.6;}
+.kp-dot{width:6px;height:6px;border-radius:50%;background:var(--rust);flex-shrink:0;margin-top:.55rem;}
+.kp-dot.blue{background:var(--blue);}
+.kp-dot.green{background:var(--green);}
+.kp-dot.gold{background:var(--gold);}
+.kp-dot.dark{background:var(--ink);}
+.kp-text{color:var(--muted);}
+.kp-text strong{color:var(--ink);}
+.kp-text code{font-family:"DM Mono",monospace;font-size:.78rem;background:var(--paper);border:1px solid var(--border);color:var(--rust);padding:1px 4px;border-radius:2px;}
+
+/* ── TWO-COL ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin:1rem 0;}
+
+/* ── PROCESS FLOW (OSPF States) ── */
+.fsm-flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:0;margin:1rem 0;}
+.fsm-step{flex:1;min-width:100px;background:var(--cream);border:1px solid var(--border);border-right:none;padding:.8rem .7rem;text-align:center;position:relative;}
+.fsm-step:last-child{border-right:1px solid var(--border);}
+.fsm-step::after{content:"→";position:absolute;right:-12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.9rem;z-index:2;background:var(--paper);padding:0 2px;}
+.fsm-step:last-child::after{display:none;}
+.fsm-bubble{width:48px;height:48px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:"DM Mono",monospace;font-size:.65rem;color:var(--muted);font-weight:600;background:var(--paper);margin:0 auto .5rem;line-height:1.2;text-align:center;padding:4px;}
+.fsm-step.done .fsm-bubble{border-color:var(--green);color:var(--green);}
+.fsm-step.active .fsm-bubble{border-color:var(--rust);color:var(--rust);}
+.fsm-step.warn .fsm-bubble{border-color:var(--gold);color:var(--gold);}
+.fsm-name{font-family:"Bebas Neue",sans-serif;font-size:.85rem;letter-spacing:.5px;color:var(--ink);margin-bottom:.2rem;}
+.fsm-desc{font-family:"DM Mono",monospace;font-size:.62rem;color:var(--muted);line-height:1.4;}
+
+/* ── TABLES ── */
+.ref-table{width:100%;border-collapse:collapse;font-size:.85rem;margin:.8rem 0;}
+.ref-table th{background:var(--ink);color:#fff;font-family:"Bebas Neue",sans-serif;font-size:.9rem;letter-spacing:1.5px;padding:.65rem 1rem;text-align:left;}
+.ref-table td{padding:.65rem 1rem;border-bottom:1px solid var(--border);color:var(--muted);}
+.ref-table td:first-child{color:var(--ink);font-weight:500;}
+.ref-table tr:nth-child(even) td{background:rgba(0,0,0,.025);}
+.ref-table tr:last-child td{border-bottom:none;}
+.ref-table code{font-family:"DM Mono",monospace;font-size:.78rem;background:var(--cream);border:1px solid var(--border);color:var(--rust);padding:1px 4px;border-radius:2px;}
+.badge{display:inline-flex;align-items:center;font-family:"DM Mono",monospace;font-size:.68rem;padding:2px 6px;border-radius:3px;font-weight:600;vertical-align:middle;margin:0 2px;}
+.badge-blue{background:var(--blue-light);color:var(--blue);border:1px solid rgba(26,58,107,.2);}
+.badge-green{background:var(--green-light);color:var(--green);border:1px solid rgba(42,107,58,.2);}
+.badge-gold{background:rgba(212,160,57,.15);color:var(--gold);border:1px solid rgba(212,160,57,.3);}
+.badge-rust{background:var(--rust-light);color:var(--rust);border:1px solid rgba(201,74,42,.2);}
+.badge-dark{background:var(--cream);color:var(--muted);border:1px solid var(--border);}
+
+/* ── CLI / CODE BLOCKS ── */
+.cli-block{background:#0c0e13;border:1px solid #23272f;border-radius:4px;overflow:hidden;margin:.9rem 0;}
+.cli-title{background:#1a1e28;color:var(--gold);font-family:"DM Mono",monospace;font-size:.66rem;letter-spacing:1.5px;text-transform:uppercase;padding:.45rem .9rem;border-bottom:1px solid #23272f;display:flex;align-items:center;gap:.5rem;}
+.cli-title::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--rust);}
+.cli-body{padding:.9rem 1rem;font-family:"DM Mono",monospace;font-size:.79rem;line-height:1.75;color:#e4e2dc;overflow-x:auto;white-space:pre;}
+.cli-body .cm{color:#5a7a5a;font-style:italic;}
+.cli-body .pr{color:#5a7a6a;user-select:none;}
+.cli-body .cd{color:#7eb3ff;}
+.cli-body .kw{color:#d4a039;}
+.cli-body .vl{color:#6fd4b0;}
+.cli-body .ok{color:#50c050;}
+.cli-body .er{color:#f87171;}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:2rem 3rem 2.5rem;border-top:1px solid var(--border);flex-wrap:wrap;gap:1rem;max-width:960px;margin:0 auto;}
+.bnav-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.4rem;border:1px solid var(--border);border-radius:2px;text-decoration:none;font-family:"Bebas Neue",sans-serif;font-size:.9rem;letter-spacing:1px;color:var(--ink);background:var(--paper);transition:all .2s;}
+.bnav-btn:hover{border-color:var(--rust);color:var(--rust);}
+.bnav-next{background:var(--rust);color:#fff !important;border-color:var(--rust);}
+.bnav-next:hover{background:#a83a1e !important;}
+.bnav-home{background:var(--ink);color:#fff !important;border-color:var(--ink);}
+.bnav-home:hover{background:#222 !important;}
+
+/* ── FOOTER ── */
+footer{background:var(--ink);color:#555;padding:1.5rem 3rem;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #222;font-family:"DM Mono",monospace;font-size:.7rem;flex-wrap:wrap;gap:.5rem;}
+.footer-brand{font-family:"Bebas Neue",sans-serif;font-size:1rem;letter-spacing:2px;color:#333;}
+.footer-brand em{color:var(--rust);font-style:normal;}
+
+@media(max-width:768px){
+  .two-col,.card-grid,.kp-grid{grid-template-columns:1fr;}
+  .fsm-flow{flex-direction:column;}
+  .fsm-step{border-right:1px solid var(--border);border-bottom:none;}
+  .fsm-step:last-child{border-bottom:1px solid var(--border);}
+  .fsm-step::after{content:"↓";right:auto;top:auto;bottom:-14px;left:50%;transform:translateX(-50%);}
+  .sec{padding:1.5rem;}
+  .bottom-nav{padding:1.5rem;}
+  .hero{padding:2.5rem 1.5rem;}
+  .toc-wrap{padding:0 1.5rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── UPPER NAV ── -->
+<div id="course-navbar">
+  <a class="cnav-home" href="index.html">⌂ HOME</a>
+  <div class="cnav-module">MODULE 14 / 16 &nbsp; <strong>OSPF — OPEN SHORTEST PATH FIRST</strong></div>
+  <a class="cnav-arrow" href="module13_static-route.html">← 13</a>
+  <a class="cnav-arrow cnav-next" href="module14_basic-bgp.html">15 →</a>
+  <div class="cnav-progress" style="width:87%"></div>
+</div>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-kicker">// Module 14 / 16 — Interior Gateway Protocol</div>
+  <h1><em>OSPF</em> Complete Reference</h1>
+  <p>Open Shortest Path First — Link-state IGP, Dijkstra SPF algorithm, multi-area design, LSA types, and full Cisco IOS configuration examples.</p>
+  <div class="pill-row">
+    <span class="pill pill-blue">RFC 2328 — OSPF v2</span>
+    <span class="pill pill-teal">IGP · Link-State</span>
+    <span class="pill pill-gold">Dijkstra SPF</span>
+    <span class="pill pill-purple">Multi-Area</span>
+    <span class="pill pill-blue">AD = 110</span>
+  </div>
+  <div class="prog-wrap"><div class="prog-bar" style="width:87%"></div></div>
+</div>
+
+<!-- ── TOC ── -->
+<div class="toc-wrap">
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#s1">What is OSPF?</a></li>
+      <li><a href="#s2">How OSPF Works — 7-State Machine</a></li>
+      <li><a href="#s3">OSPF Structure — Areas &amp; Router Roles</a></li>
+      <li><a href="#s4">LSA Types</a></li>
+      <li><a href="#s5">Cisco IOS Commands</a></li>
+      <li><a href="#s6">Lab 1 — Basic Single-Area OSPF</a></li>
+      <li><a href="#s7">Lab 2 — Multi-Area + Summarization + Redistribution</a></li>
+      <li><a href="#s8">Troubleshooting &amp; Best Practices</a></li>
+    </ol>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     SECTION 1 — What is OSPF
+     ═══════════════════════════════════ -->
+<section class="sec" id="s1">
+  <div class="sec-hdr">
+    <div class="sec-num">01</div>
+    <div>
+      <div class="sec-tag">// Link-State Routing</div>
+      <div class="sec-title">What is OSPF?</div>
+    </div>
+  </div>
+
+  <p class="lead">OSPF (Open Shortest Path First) is an open-standard <strong>Link-State Routing Protocol</strong> defined by RFC 2328, used as an Interior Gateway Protocol (IGP) within a single Autonomous System. Unlike distance-vector protocols, each router builds a <strong>complete topology map</strong> (LSDB) and independently runs Dijkstra's algorithm to compute the shortest path.</p>
+
+  <div class="card-grid">
+    <div class="card"><div class="card-head rust">⚡ Fast Convergence</div><div class="card-body">When a link fails, routers recalculate and install new paths within seconds — far faster than distance-vector protocols.</div></div>
+    <div class="card"><div class="card-head blue">🗺️ Complete Topology Map</div><div class="card-body">Every router holds the full network map (LSDB), not just next-hop distance and direction like RIP does.</div></div>
+    <div class="card"><div class="card-head dark">∞ No Hop Count Limit</div><div class="card-body">RIP caps at 15 hops. OSPF has no such constraint, making it suitable for large enterprise and ISP networks.</div></div>
+    <div class="card"><div class="card-head green">⚖️ ECMP Load Balancing</div><div class="card-body">Traffic distributed across multiple equal-cost paths simultaneously using Equal-Cost Multi-Path routing.</div></div>
+    <div class="card"><div class="card-head rust">🔐 Authentication</div><div class="card-body">Supports MD5 and SHA authentication to prevent rogue routers from joining the OSPF domain.</div></div>
+    <div class="card"><div class="card-head blue">📊 VLSM / CIDR Support</div><div class="card-body">Supports variable-length subnet masks and route summarization to keep routing tables lean.</div></div>
+  </div>
+
+  <div class="note blue">
+    <span class="note-lbl">OSPF Cost Metric</span>
+    OSPF uses <strong>Cost</strong> as its metric: <code>Cost = 100 Mbps ÷ Interface Bandwidth</code>. For links faster than 100 Mbps (GigabitEthernet, 10G), adjust using <code>auto-cost reference-bandwidth</code> — otherwise all fast interfaces will have cost = 1 and OSPF cannot differentiate them.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SECTION 2 — How OSPF Works
+     ═══════════════════════════════════ -->
+<section class="sec" id="s2">
+  <div class="sec-hdr">
+    <div class="sec-num">02</div>
+    <div>
+      <div class="sec-tag">// Neighbor States</div>
+      <div class="sec-title">How OSPF Works — 7-State Machine</div>
+    </div>
+  </div>
+
+  <p class="lead">OSPF builds neighbor relationships through a 7-state machine before exchanging routing information and running SPF. The target state is <strong>Full</strong> — both routers have identical LSDBs.</p>
+
+  <div class="fsm-flow">
+    <div class="fsm-step">
+      <div class="fsm-bubble">Down</div>
+      <div class="fsm-name">Down</div>
+      <div class="fsm-desc">No Hello<br>received yet</div>
+    </div>
+    <div class="fsm-step">
+      <div class="fsm-bubble">Init</div>
+      <div class="fsm-name">Init</div>
+      <div class="fsm-desc">Hello seen,<br>not bidirectional</div>
+    </div>
+    <div class="fsm-step">
+      <div class="fsm-bubble">2-Way</div>
+      <div class="fsm-name">2-Way</div>
+      <div class="fsm-desc">Bidirectional<br>DR/BDR elect</div>
+    </div>
+    <div class="fsm-step">
+      <div class="fsm-bubble">ExStart</div>
+      <div class="fsm-name">ExStart</div>
+      <div class="fsm-desc">Master/slave<br>negotiation</div>
+    </div>
+    <div class="fsm-step">
+      <div class="fsm-bubble">Exchange</div>
+      <div class="fsm-name">Exchange</div>
+      <div class="fsm-desc">Exchange<br>DBD headers</div>
+    </div>
+    <div class="fsm-step">
+      <div class="fsm-bubble">Loading</div>
+      <div class="fsm-name">Loading</div>
+      <div class="fsm-desc">LSR → LSU<br>→ LSAck</div>
+    </div>
+    <div class="fsm-step done">
+      <div class="fsm-bubble">Full ✓</div>
+      <div class="fsm-name">Full</div>
+      <div class="fsm-desc">LSDB sync'd<br>Run SPF</div>
+    </div>
+  </div>
+
+  <h3>OSPF Packet Types (5 types)</h3>
+  <table class="ref-table">
+    <thead><tr><th>Type</th><th>Name</th><th>Purpose</th><th>Addressing</th></tr></thead>
+    <tbody>
+      <tr><td>Type 1</td><td>Hello</td><td>Neighbor discovery, keepalive, DR/BDR election</td><td><span class="badge badge-blue">224.0.0.5</span></td></tr>
+      <tr><td>Type 2</td><td>Database Description (DBD)</td><td>Summarizes LSDB headers so neighbors can compare</td><td><span class="badge badge-dark">Unicast</span></td></tr>
+      <tr><td>Type 3</td><td>Link-State Request (LSR)</td><td>Requests specific LSAs that are missing or outdated</td><td><span class="badge badge-dark">Unicast</span></td></tr>
+      <tr><td>Type 4</td><td>Link-State Update (LSU)</td><td>Delivers the actual LSA data to neighbors</td><td><span class="badge badge-blue">224.0.0.6</span></td></tr>
+      <tr><td>Type 5</td><td>Link-State Ack (LSAck)</td><td>Acknowledges successful receipt of an LSA</td><td><span class="badge badge-dark">Unicast</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="two-col" style="margin-top:1rem;">
+    <div class="card">
+      <div class="card-head blue">⚙️ Hello Packet — Must Match</div>
+      <div class="card-body">
+        <strong>Hello Interval</strong> — how often Hellos are sent (default: 10s)<br><br>
+        <strong>Dead Interval</strong> — wait before declaring neighbor dead (default: 40s)<br><br>
+        <strong>Area ID</strong> — must match on both sides<br><br>
+        <strong>Authentication</strong> — must match<br><br>
+        <strong>Stub Area Flag</strong> — must match<br><br>
+        <strong>MTU</strong> — must match (or explicitly ignored)
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head rust">📡 DR / BDR Election</div>
+      <div class="card-body">
+        Used on <strong>Multi-Access networks</strong> (Ethernet) to reduce flooding overhead<br><br>
+        <strong>DR</strong> = Designated Router (highest priority wins)<br>
+        <strong>BDR</strong> = Backup DR (second-highest)<br><br>
+        Priority = 0 → excluded from election entirely<br>
+        Equal priority → highest Router-ID wins<br><br>
+        <strong>Point-to-point links</strong> do not use DR/BDR
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SECTION 3 — Structure
+     ═══════════════════════════════════ -->
+<section class="sec" id="s3">
+  <div class="sec-hdr">
+    <div class="sec-num">03</div>
+    <div>
+      <div class="sec-tag">// Areas &amp; Hierarchy</div>
+      <div class="sec-title">OSPF Structure</div>
+    </div>
+  </div>
+
+  <p class="lead">OSPF uses a <strong>2-Level Hierarchy</strong> — dividing the network into smaller Areas to reduce LSDB size and limit LSA flooding. Every Area must connect to <strong>Area 0 (the Backbone)</strong>.</p>
+
+  <div class="gif-wrap">
+    <div class="gif-hdr">OSPF Multi-Area Topology — Area 0 (Backbone), Area 1 (Stub), Area 2 (NSSA)</div>
+    <div class="gif-stage">
+      <svg width="100%" viewBox="0 0 660 290" xmlns="http://www.w3.org/2000/svg" style="max-width:660px;">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="arr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#00e5a0" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="arr-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#ffb340" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+        <rect x="200" y="20" width="260" height="130" rx="12" fill="none" stroke="#00d4ff" stroke-width="1" stroke-dasharray="5 3" opacity="0.5"/>
+        <text x="330" y="40" text-anchor="middle" fill="#00d4ff" font-family="'DM Mono',monospace" font-size="12" font-weight="600">Backbone — Area 0</text>
+        <rect x="230" y="55" width="80" height="44" rx="8" fill="#1a2233" stroke="#00d4ff" stroke-width="1"/>
+        <text x="270" y="74" text-anchor="middle" fill="#00d4ff" font-family="'DM Mono',monospace" font-size="13" font-weight="700">R2</text>
+        <text x="270" y="90" text-anchor="middle" fill="#4a607a" font-family="'DM Sans',sans-serif" font-size="11">ABR</text>
+        <rect x="350" y="55" width="80" height="44" rx="8" fill="#1a2233" stroke="#00d4ff" stroke-width="1"/>
+        <text x="390" y="74" text-anchor="middle" fill="#00d4ff" font-family="'DM Mono',monospace" font-size="13" font-weight="700">R3</text>
+        <text x="390" y="90" text-anchor="middle" fill="#4a607a" font-family="'DM Sans',sans-serif" font-size="11">ABR/ASBR</text>
+        <rect x="290" y="115" width="80" height="30" rx="8" fill="#1a2233" stroke="#00d4ff" stroke-width="1"/>
+        <text x="330" y="135" text-anchor="middle" fill="#7a91b0" font-family="'DM Mono',monospace" font-size="12">R1 (DR)</text>
+        <line x1="310" y1="77" x2="350" y2="77" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arr)" opacity="0.6"/>
+        <line x1="270" y1="99" x2="300" y2="115" stroke="#00d4ff" stroke-width="1" opacity="0.3"/>
+        <line x1="390" y1="99" x2="360" y2="115" stroke="#00d4ff" stroke-width="1" opacity="0.3"/>
+        <rect x="20" y="175" width="230" height="100" rx="12" fill="none" stroke="#00e5a0" stroke-width="1" stroke-dasharray="5 3" opacity="0.5"/>
+        <text x="135" y="193" text-anchor="middle" fill="#00e5a0" font-family="'DM Sans',sans-serif" font-size="12" font-weight="600">Area 1 (Stub)</text>
+        <rect x="40" y="205" width="70" height="40" rx="8" fill="#1a2233" stroke="#00e5a0" stroke-width="0.8"/>
+        <text x="75" y="229" text-anchor="middle" fill="#00e5a0" font-family="'DM Mono',monospace" font-size="13" font-weight="600">R4</text>
+        <rect x="155" y="205" width="70" height="40" rx="8" fill="#1a2233" stroke="#00e5a0" stroke-width="0.8"/>
+        <text x="190" y="229" text-anchor="middle" fill="#00e5a0" font-family="'DM Mono',monospace" font-size="13" font-weight="600">R5</text>
+        <line x1="110" y1="225" x2="153" y2="225" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
+        <rect x="410" y="175" width="230" height="100" rx="12" fill="none" stroke="#ffb340" stroke-width="1" stroke-dasharray="5 3" opacity="0.5"/>
+        <text x="525" y="193" text-anchor="middle" fill="#ffb340" font-family="'DM Sans',sans-serif" font-size="12" font-weight="600">Area 2 (NSSA)</text>
+        <rect x="430" y="205" width="70" height="40" rx="8" fill="#1a2233" stroke="#ffb340" stroke-width="0.8"/>
+        <text x="465" y="229" text-anchor="middle" fill="#ffb340" font-family="'DM Mono',monospace" font-size="13" font-weight="600">R6</text>
+        <rect x="545" y="205" width="80" height="40" rx="8" fill="#1a2233" stroke="#ffb340" stroke-width="0.8"/>
+        <text x="585" y="222" text-anchor="middle" fill="#ffb340" font-family="'DM Mono',monospace" font-size="13" font-weight="600">R7</text>
+        <text x="585" y="237" text-anchor="middle" fill="#4a607a" font-family="'DM Sans',sans-serif" font-size="10">ASBR</text>
+        <line x1="500" y1="225" x2="543" y2="225" stroke="#ffb340" stroke-width="1.2" opacity="0.5"/>
+        <line x1="240" y1="99" x2="135" y2="175" stroke="#00e5a0" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr-g)" opacity="0.6"/>
+        <line x1="410" y1="99" x2="505" y2="175" stroke="#ffb340" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr-a)" opacity="0.6"/>
+        <rect x="590" y="260" width="65" height="25" rx="12" fill="none" stroke="#f87171" stroke-width="0.8" stroke-dasharray="3 2" opacity="0.6"/>
+        <text x="622" y="277" text-anchor="middle" fill="#f87171" font-family="'DM Sans',sans-serif" font-size="11">Internet</text>
+        <line x1="590" y1="245" x2="610" y2="260" stroke="#f87171" stroke-width="1" stroke-dasharray="3 2" opacity="0.5"/>
+      </svg>
+    </div>
+  </div>
+
+  <h3>Router Roles</h3>
+  <table class="ref-table">
+    <thead><tr><th>Router Type</th><th>Description</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td>Internal Router</td><td>All interfaces belong to the same Area</td><td>R1 — all interfaces in Area 0</td></tr>
+      <tr><td>ABR</td><td>Area Border Router — connects 2+ Areas, always including Area 0</td><td>R2 bridges Area 0 ↔ Area 1</td></tr>
+      <tr><td>ASBR</td><td>AS Boundary Router — connects to an external routing domain</td><td>R7 redistributes BGP into OSPF</td></tr>
+      <tr><td>Backbone Router</td><td>Has at least one interface in Area 0</td><td>All routers inside Area 0</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Area Types</h3>
+  <table class="ref-table">
+    <thead><tr><th>Area Type</th><th>Accepts LSA Types</th><th>Default Route</th><th>Best Used For</th></tr></thead>
+    <tbody>
+      <tr><td>Normal</td><td>Type 1–5, 7</td><td>None (configure manually)</td><td>General-purpose areas</td></tr>
+      <tr><td>Stub</td><td>Type 1–3 only</td><td>Auto-injected by ABR</td><td>Branch sites with a single exit point</td></tr>
+      <tr><td>Totally Stubby</td><td>Type 1–2 only</td><td>Auto-injected by ABR</td><td>Minimizing LSDB size (Cisco proprietary)</td></tr>
+      <tr><td>NSSA</td><td>Type 1–3, 7</td><td>Optional</td><td>Stub area that also has an ASBR</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════════════════════
+     SECTION 4 — LSA Types
+     ═══════════════════════════════════ -->
+<section class="sec" id="s4">
+  <div class="sec-hdr">
+    <div class="sec-num">04</div>
+    <div>
+      <div class="sec-tag">// Link-State Advertisements</div>
+      <div class="sec-title">LSA Types</div>
+    </div>
+  </div>
+
+  <p class="lead">An LSA (Link-State Advertisement) is the routing information a router advertises to describe its local topology. Different LSA types serve different scopes and purposes within OSPF.</p>
+
+  <table class="ref-table">
+    <thead><tr><th>LSA Type</th><th>Name</th><th>Generated By</th><th>Scope</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>Type 1</td><td>Router LSA</td><td>Every router</td><td><span class="badge badge-green">Intra-Area</span></td><td>Describes a router's links and their costs</td></tr>
+      <tr><td>Type 2</td><td>Network LSA</td><td>DR on multi-access</td><td><span class="badge badge-green">Intra-Area</span></td><td>Lists all routers on a broadcast segment</td></tr>
+      <tr><td>Type 3</td><td>Summary LSA</td><td>ABR</td><td><span class="badge badge-blue">Inter-Area</span></td><td>Summarizes prefixes from one Area into another</td></tr>
+      <tr><td>Type 4</td><td>ASBR Summary LSA</td><td>ABR</td><td><span class="badge badge-blue">Inter-Area</span></td><td>Tells other areas where the ASBR is located</td></tr>
+      <tr><td>Type 5</td><td>External LSA</td><td>ASBR</td><td><span class="badge badge-rust">All Areas (not Stub)</span></td><td>External routes injected via redistribution</td></tr>
+      <tr><td>Type 7</td><td>NSSA External LSA</td><td>ASBR in NSSA</td><td><span class="badge badge-gold">NSSA only</span></td><td>Converted to Type 5 when leaving NSSA</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note blue">
+    <span class="note-lbl">E1 vs E2 External Routes</span>
+    <strong>E1</strong> accumulates cost from the source (ASBR) all the way to the destination. <strong>E2</strong> uses only the fixed metric set at the ASBR (default). Use E1 when multiple ASBRs exist — it accounts for internal path cost and selects the nearest ASBR automatically.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SECTION 5 — Commands
+     ═══════════════════════════════════ -->
+<section class="sec" id="s5">
+  <div class="sec-hdr">
+    <div class="sec-num">05</div>
+    <div>
+      <div class="sec-tag">// Cisco IOS</div>
+      <div class="sec-title">OSPF Commands on Cisco IOS</div>
+    </div>
+  </div>
+
+  <h3>Basic Configuration</h3>
+  <div class="cli-block">
+    <div class="cli-title">ospf-basic-config.ios</div>
+    <div class="cli-body"><span class="cm">! Enable OSPF process (process-id is local only — does not need to match)</span>
+<span class="pr">Router(config)# </span><span class="cd">router ospf</span> <span class="vl">1</span>
+
+<span class="cm">! Set Router-ID manually (always recommended — use a stable Loopback IP)</span>
+<span class="pr">Router(config-router)# </span><span class="cd">router-id</span> <span class="vl">1.1.1.1</span>
+
+<span class="cm">! Advertise networks (wildcard mask = inverse of subnet mask)</span>
+<span class="pr">Router(config-router)# </span><span class="cd">network</span> <span class="vl">10.0.12.0</span> <span class="vl">0.0.0.3</span> <span class="kw">area</span> <span class="vl">0</span>
+<span class="pr">Router(config-router)# </span><span class="cd">network</span> <span class="vl">1.1.1.1</span> <span class="vl">0.0.0.0</span> <span class="kw">area</span> <span class="vl">0</span>
+
+<span class="cm">! Modern method (IOS 12.4+): enable OSPF directly on the interface</span>
+<span class="pr">Router(config-if)# </span><span class="cd">ip ospf</span> <span class="vl">1</span> <span class="kw">area</span> <span class="vl">0</span>
+
+<span class="cm">! Suppress Hello on interfaces with no OSPF neighbors (best practice)</span>
+<span class="pr">Router(config-router)# </span><span class="cd">passive-interface</span> <span class="kw">default</span>
+<span class="pr">Router(config-router)# </span><span class="kw">no</span> <span class="cd">passive-interface</span> GigabitEthernet0/0</div>
+  </div>
+
+  <h3>Interface Tuning</h3>
+  <div class="cli-block">
+    <div class="cli-title">ospf-interface-tuning.ios</div>
+    <div class="cli-body"><span class="cm">! Override the auto-calculated cost on an interface</span>
+<span class="pr">Router(config-if)# </span><span class="cd">ip ospf cost</span> <span class="vl">100</span>
+
+<span class="cm">! Adjust reference bandwidth to cover the fastest links (e.g. 10G)</span>
+<span class="pr">Router(config-router)# </span><span class="cd">auto-cost reference-bandwidth</span> <span class="vl">10000</span>
+
+<span class="cm">! Set DR/BDR priority (0 = never become DR or BDR)</span>
+<span class="pr">Router(config-if)# </span><span class="cd">ip ospf priority</span> <span class="vl">200</span>
+
+<span class="cm">! Tune Hello / Dead intervals (must match on both ends)</span>
+<span class="pr">Router(config-if)# </span><span class="cd">ip ospf hello-interval</span> <span class="vl">5</span>
+<span class="pr">Router(config-if)# </span><span class="cd">ip ospf dead-interval</span> <span class="vl">20</span>
+
+<span class="cm">! Fix EXSTART issue caused by MTU mismatch</span>
+<span class="pr">Router(config-if)# </span><span class="cd">ip ospf mtu-ignore</span>
+
+<span class="cm">! Skip DR/BDR election on Ethernet P2P links</span>
+<span class="pr">Router(config-if)# </span><span class="cd">ip ospf network point-to-point</span></div>
+  </div>
+
+  <h3>Authentication (MD5)</h3>
+  <div class="cli-block">
+    <div class="cli-title">ospf-authentication.ios</div>
+    <div class="cli-body"><span class="cm">! Method 1: per-interface</span>
+<span class="pr">Router(config-if)# </span><span class="cd">ip ospf authentication message-digest</span>
+<span class="pr">Router(config-if)# </span><span class="cd">ip ospf message-digest-key</span> <span class="vl">1</span> <span class="kw">md5</span> <span class="vl">MySecretKey123</span>
+
+<span class="cm">! Method 2: area-level (applies to all interfaces in the area)</span>
+<span class="pr">Router(config-router)# </span><span class="cd">area</span> <span class="vl">0</span> <span class="kw">authentication message-digest</span>
+<span class="pr">Router(config-if)# </span><span class="cd">ip ospf message-digest-key</span> <span class="vl">1</span> <span class="kw">md5</span> <span class="vl">MySecretKey123</span></div>
+  </div>
+
+  <h3>Verification Commands</h3>
+  <div class="cli-block">
+    <div class="cli-title">ospf-verify.ios</div>
+    <div class="cli-body"><span class="cm">! Check neighbor states</span>
+<span class="pr">Router# </span><span class="cd">show ip ospf neighbor</span>
+<span class="ok">Neighbor ID   Pri   State       Dead Time   Address        Interface</span>
+<span class="ok">2.2.2.2         1   FULL/DR     00:00:38    10.0.12.2      GigabitEthernet0/0</span>
+<span class="ok">3.3.3.3         1   FULL/BDR    00:00:35    10.0.12.3      GigabitEthernet0/0</span>
+
+<span class="cm">! Show OSPF routes in the routing table</span>
+<span class="pr">Router# </span><span class="cd">show ip route ospf</span>
+<span class="ok">O    2.2.2.2/32 [110/2] via 10.0.12.2, GigabitEthernet0/0</span>
+<span class="ok">O IA 192.168.1.0/24 [110/11] via 10.0.12.2, GigabitEthernet0/0</span>
+<span class="ok">O E2 203.0.113.0/24 [110/20] via 10.0.12.3, GigabitEthernet0/0</span>
+
+<span class="pr">Router# </span><span class="cd">show ip ospf database</span>        <span class="cm">! Inspect the LSDB</span>
+<span class="pr">Router# </span><span class="cd">show ip ospf interface</span> Gi0/0   <span class="cm">! Per-interface OSPF details</span>
+<span class="pr">Router# </span><span class="cd">show ip ospf</span>                    <span class="cm">! OSPF process info &amp; stats</span>
+
+<span class="cm">! Debug (lab only — never on production with many neighbors!)</span>
+<span class="pr">Router# </span><span class="er">debug ip ospf adj</span>
+<span class="pr">Router# </span><span class="er">undebug all</span></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SECTION 6 — Lab 1
+     ═══════════════════════════════════ -->
+<section class="sec" id="s6">
+  <div class="sec-hdr">
+    <div class="sec-num">06</div>
+    <div>
+      <div class="sec-tag">// Hands-On Lab</div>
+      <div class="sec-title">Lab 1 — Basic Single-Area OSPF</div>
+    </div>
+  </div>
+
+  <p class="lead">Three-router topology: R1 — R2 — R3, all within Area 0. Goal: full reachability across all routers via OSPF-learned routes.</p>
+
+  <div class="gif-wrap">
+    <div class="gif-hdr">Lab 1 Topology — R1, R2, R3 in Area 0</div>
+    <div class="gif-stage">
+      <svg width="100%" viewBox="0 0 660 180" xmlns="http://www.w3.org/2000/svg" style="max-width:660px;">
+        <defs>
+          <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+        <rect x="20" y="20" width="620" height="140" rx="12" fill="none" stroke="#00d4ff" stroke-width="1" stroke-dasharray="5 3" opacity="0.35"/>
+        <text x="330" y="42" text-anchor="middle" fill="#00d4ff" font-family="'DM Mono',monospace" font-size="12" opacity="0.7">OSPF Area 0</text>
+        <rect x="50" y="60" width="130" height="75" rx="10" fill="#1a2233" stroke="#00d4ff" stroke-width="1"/>
+        <text x="115" y="86" text-anchor="middle" fill="#00d4ff" font-family="'DM Mono',monospace" font-size="16" font-weight="700">R1</text>
+        <text x="115" y="103" text-anchor="middle" fill="#4a607a" font-family="'DM Mono',monospace" font-size="11">Gi0/0: 10.0.12.1</text>
+        <text x="115" y="120" text-anchor="middle" fill="#4a607a" font-family="'DM Mono',monospace" font-size="11">Lo0: 1.1.1.1/32</text>
+        <rect x="265" y="60" width="130" height="88" rx="10" fill="#1a2233" stroke="#00d4ff" stroke-width="1"/>
+        <text x="330" y="86" text-anchor="middle" fill="#00d4ff" font-family="'DM Mono',monospace" font-size="16" font-weight="700">R2</text>
+        <text x="330" y="103" text-anchor="middle" fill="#4a607a" font-family="'DM Mono',monospace" font-size="11">Gi0/0: 10.0.12.2</text>
+        <text x="330" y="118" text-anchor="middle" fill="#4a607a" font-family="'DM Mono',monospace" font-size="11">Gi0/1: 10.0.23.1</text>
+        <text x="330" y="133" text-anchor="middle" fill="#4a607a" font-family="'DM Mono',monospace" font-size="11">Lo0: 2.2.2.2/32</text>
+        <rect x="480" y="60" width="130" height="75" rx="10" fill="#1a2233" stroke="#00d4ff" stroke-width="1"/>
+        <text x="545" y="86" text-anchor="middle" fill="#00d4ff" font-family="'DM Mono',monospace" font-size="16" font-weight="700">R3</text>
+        <text x="545" y="103" text-anchor="middle" fill="#4a607a" font-family="'DM Mono',monospace" font-size="11">Gi0/0: 10.0.23.2</text>
+        <text x="545" y="120" text-anchor="middle" fill="#4a607a" font-family="'DM Mono',monospace" font-size="11">Lo0: 3.3.3.3/32</text>
+        <line x1="180" y1="97" x2="263" y2="97" stroke="#00d4ff" stroke-width="2" marker-end="url(#arr2)" opacity="0.6"/>
+        <line x1="265" y1="103" x2="182" y2="103" stroke="#00d4ff" stroke-width="2" marker-end="url(#arr2)" opacity="0.6"/>
+        <line x1="395" y1="97" x2="478" y2="97" stroke="#00d4ff" stroke-width="2" marker-end="url(#arr2)" opacity="0.6"/>
+        <line x1="480" y1="103" x2="397" y2="103" stroke="#00d4ff" stroke-width="2" marker-end="url(#arr2)" opacity="0.6"/>
+        <rect x="195" y="86" width="70" height="16" rx="4" fill="#0d1520" stroke="#1e2d45" stroke-width="0.5"/>
+        <text x="230" y="98" text-anchor="middle" fill="#7a91b0" font-family="'DM Mono',monospace" font-size="10">10.0.12.0/30</text>
+        <rect x="410" y="86" width="70" height="16" rx="4" fill="#0d1520" stroke="#1e2d45" stroke-width="0.5"/>
+        <text x="445" y="98" text-anchor="middle" fill="#7a91b0" font-family="'DM Mono',monospace" font-size="10">10.0.23.0/30</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="cli-block">
+      <div class="cli-title">R1 Configuration</div>
+      <div class="cli-body"><span class="pr">R1(config)# </span><span class="cd">interface</span> GigabitEthernet0/0
+<span class="pr">R1(config-if)# </span><span class="cd">ip address</span> <span class="vl">10.0.12.1 255.255.255.252</span>
+<span class="pr">R1(config-if)# </span><span class="kw">no shutdown</span>
+
+<span class="pr">R1(config)# </span><span class="cd">interface</span> Loopback0
+<span class="pr">R1(config-if)# </span><span class="cd">ip address</span> <span class="vl">1.1.1.1 255.255.255.255</span>
+
+<span class="pr">R1(config)# </span><span class="cd">router ospf</span> <span class="vl">1</span>
+<span class="pr">R1(config-router)# </span><span class="cd">router-id</span> <span class="vl">1.1.1.1</span>
+<span class="pr">R1(config-router)# </span><span class="cd">network</span> <span class="vl">10.0.12.0</span> <span class="vl">0.0.0.3</span> <span class="kw">area</span> <span class="vl">0</span>
+<span class="pr">R1(config-router)# </span><span class="cd">network</span> <span class="vl">1.1.1.1</span> <span class="vl">0.0.0.0</span> <span class="kw">area</span> <span class="vl">0</span></div>
+    </div>
+    <div class="cli-block">
+      <div class="cli-title">R2 Configuration</div>
+      <div class="cli-body"><span class="pr">R2(config)# </span><span class="cd">interface</span> GigabitEthernet0/0
+<span class="pr">R2(config-if)# </span><span class="cd">ip address</span> <span class="vl">10.0.12.2 255.255.255.252</span>
+<span class="pr">R2(config-if)# </span><span class="kw">no shutdown</span>
+<span class="pr">R2(config)# </span><span class="cd">interface</span> GigabitEthernet0/1
+<span class="pr">R2(config-if)# </span><span class="cd">ip address</span> <span class="vl">10.0.23.1 255.255.255.252</span>
+<span class="pr">R2(config-if)# </span><span class="kw">no shutdown</span>
+<span class="pr">R2(config)# </span><span class="cd">interface</span> Loopback0
+<span class="pr">R2(config-if)# </span><span class="cd">ip address</span> <span class="vl">2.2.2.2 255.255.255.255</span>
+
+<span class="pr">R2(config)# </span><span class="cd">router ospf</span> <span class="vl">1</span>
+<span class="pr">R2(config-router)# </span><span class="cd">router-id</span> <span class="vl">2.2.2.2</span>
+<span class="pr">R2(config-router)# </span><span class="cd">network</span> <span class="vl">10.0.12.0</span> <span class="vl">0.0.0.3</span> <span class="kw">area</span> <span class="vl">0</span>
+<span class="pr">R2(config-router)# </span><span class="cd">network</span> <span class="vl">10.0.23.0</span> <span class="vl">0.0.0.3</span> <span class="kw">area</span> <span class="vl">0</span>
+<span class="pr">R2(config-router)# </span><span class="cd">network</span> <span class="vl">2.2.2.2</span> <span class="vl">0.0.0.0</span> <span class="kw">area</span> <span class="vl">0</span></div>
+    </div>
+  </div>
+
+  <div class="cli-block">
+    <div class="cli-title">Expected Output — R1</div>
+    <div class="cli-body"><span class="pr">R1# </span><span class="cd">show ip ospf neighbor</span>
+<span class="ok">Neighbor ID   Pri   State     Dead Time   Address     Interface</span>
+<span class="ok">2.2.2.2         1   FULL/DR   00:00:38    10.0.12.2   GigabitEthernet0/0</span>
+
+<span class="pr">R1# </span><span class="cd">show ip route ospf</span>
+<span class="ok">O    2.2.2.2/32 [110/2] via 10.0.12.2, 00:01:00, GigabitEthernet0/0</span>
+<span class="ok">O    3.3.3.3/32 [110/3] via 10.0.12.2, 00:00:55, GigabitEthernet0/0</span>
+<span class="ok">O    10.0.23.0/30 [110/2] via 10.0.12.2, 00:01:00, GigabitEthernet0/0</span></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SECTION 7 — Lab 2
+     ═══════════════════════════════════ -->
+<section class="sec" id="s7">
+  <div class="sec-hdr">
+    <div class="sec-num">07</div>
+    <div>
+      <div class="sec-tag">// Advanced Lab</div>
+      <div class="sec-title">Lab 2 — Multi-Area + Summarization + Redistribution</div>
+    </div>
+  </div>
+
+  <p class="lead">Advanced topology: Area 1 (Stub) → ABR → Area 0 → ASBR → BGP/Internet. Demonstrates route summarization at the ABR and BGP redistribution at the ASBR.</p>
+
+  <h3>ABR Config — Route Summarization</h3>
+  <div class="cli-block">
+    <div class="cli-title">R2 — ABR (Area 0 + Area 1 Stub)</div>
+    <div class="cli-body"><span class="pr">R2(config)# </span><span class="cd">router ospf</span> <span class="vl">1</span>
+<span class="pr">R2(config-router)# </span><span class="cd">router-id</span> <span class="vl">2.2.2.2</span>
+
+<span class="cm">! Interface facing Area 1</span>
+<span class="pr">R2(config-router)# </span><span class="cd">network</span> <span class="vl">10.0.12.0</span> <span class="vl">0.0.0.3</span> <span class="kw">area</span> <span class="vl">1</span>
+<span class="cm">! Interface facing Area 0 (Backbone)</span>
+<span class="pr">R2(config-router)# </span><span class="cd">network</span> <span class="vl">10.0.0.0</span> <span class="vl">0.0.0.3</span> <span class="kw">area</span> <span class="vl">0</span>
+
+<span class="cm">! Summarize Area 1 routes (172.16.1-4.0/24 → 172.16.0.0/22)</span>
+<span class="pr">R2(config-router)# </span><span class="cd">area</span> <span class="vl">1</span> <span class="kw">range</span> <span class="vl">172.16.0.0 255.255.252.0</span>
+
+<span class="cm">! Make Area 1 Totally Stubby — minimizes LSA flooding</span>
+<span class="pr">R2(config-router)# </span><span class="cd">area</span> <span class="vl">1</span> <span class="kw">stub no-summary</span>
+<span class="cm">! All routers inside Area 1 must also configure:</span>
+<span class="pr">R4(config-router)# </span><span class="cd">area</span> <span class="vl">1</span> <span class="kw">stub</span></div>
+  </div>
+
+  <h3>ASBR Config — Redistribute BGP into OSPF</h3>
+  <div class="cli-block">
+    <div class="cli-title">R3 — ASBR (BGP + OSPF)</div>
+    <div class="cli-body"><span class="cm">! BGP toward ISP</span>
+<span class="pr">R3(config)# </span><span class="cd">router bgp</span> <span class="vl">65000</span>
+<span class="pr">R3(config-router)# </span><span class="cd">neighbor</span> <span class="vl">203.0.113.1</span> <span class="kw">remote-as</span> <span class="vl">65001</span>
+
+<span class="cm">! OSPF on the ASBR</span>
+<span class="pr">R3(config)# </span><span class="cd">router ospf</span> <span class="vl">1</span>
+<span class="pr">R3(config-router)# </span><span class="cd">router-id</span> <span class="vl">3.3.3.3</span>
+<span class="pr">R3(config-router)# </span><span class="cd">network</span> <span class="vl">10.0.0.4</span> <span class="vl">0.0.0.3</span> <span class="kw">area</span> <span class="vl">0</span>
+
+<span class="cm">! Redistribute BGP into OSPF as External Type 2</span>
+<span class="pr">R3(config-router)# </span><span class="cd">redistribute bgp</span> <span class="vl">65000</span> <span class="kw">subnets metric</span> <span class="vl">100</span> <span class="kw">metric-type</span> <span class="vl">2</span>
+
+<span class="cm">! Inject default route into OSPF (advertise toward ISP)</span>
+<span class="pr">R3(config)# </span><span class="cd">ip route</span> <span class="vl">0.0.0.0 0.0.0.0</span> <span class="vl">203.0.113.1</span>
+<span class="pr">R3(config-router)# </span><span class="cd">default-information originate always</span></div>
+  </div>
+
+  <div class="cli-block">
+    <div class="cli-title">Expected Output — R4 (inside Totally Stubby Area 1)</div>
+    <div class="cli-body"><span class="pr">R4# </span><span class="cd">show ip route</span>
+<span class="ok">O*IA 0.0.0.0/0 [110/2] via 10.0.12.2, GigabitEthernet0/0</span>
+<span class="cm">! Totally Stubby: only one default route — no O E2 entries</span>
+<span class="cm">! LSDB is minimal, convergence is fast</span></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     SECTION 8 — Tips
+     ═══════════════════════════════════ -->
+<section class="sec" id="s8">
+  <div class="sec-hdr">
+    <div class="sec-num">08</div>
+    <div>
+      <div class="sec-tag">// Troubleshooting</div>
+      <div class="sec-title">Troubleshooting &amp; Best Practices</div>
+    </div>
+  </div>
+
+  <h3>Common Issues</h3>
+  <table class="ref-table">
+    <thead><tr><th>Symptom</th><th>Likely Cause</th><th>Resolution</th></tr></thead>
+    <tbody>
+      <tr><td>Neighbor stuck at INIT</td><td>Hello/Dead interval mismatch or Area ID mismatch</td><td>Run <code>show ip ospf interface</code> on both sides and compare</td></tr>
+      <tr><td>Stuck at EXSTART / EXCHANGE</td><td>MTU mismatch between interfaces</td><td>Apply <code>ip ospf mtu-ignore</code> or align MTU</td></tr>
+      <tr><td>Neighbor up but route missing</td><td>passive-interface enabled or wrong network statement</td><td>Check <code>show ip ospf database</code> to confirm LSA exists</td></tr>
+      <tr><td>Route shows "O" but unreachable</td><td>ACL blocking traffic or lower-AD route overriding OSPF</td><td>Use <code>traceroute</code> and check <code>show ip route</code> at each hop</td></tr>
+      <tr><td>Neighbor flapping repeatedly</td><td>Dead interval too short or router CPU overloaded</td><td>Increase Dead interval to 40s+ or deploy BFD</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Best Practices</h3>
+  <div class="kp-grid">
+    <div class="kp"><span class="kp-dot green"></span><div class="kp-text"><strong>Always set router-id manually.</strong> Use a stable Loopback IP. Never let OSPF pick one automatically — it will change if a higher-IP interface comes up.</div></div>
+    <div class="kp"><span class="kp-dot rust"></span><div class="kp-text"><strong>Use passive-interface default.</strong> Start with <code>passive-interface default</code>, then selectively enable only on OSPF neighbor links with <code>no passive-interface</code>.</div></div>
+    <div class="kp"><span class="kp-dot gold"></span><div class="kp-text"><strong>Tune reference-bandwidth.</strong> Set to match the fastest link in your network (e.g. <code>auto-cost reference-bandwidth 10000</code> for 10G) so cost comparisons are meaningful.</div></div>
+    <div class="kp"><span class="kp-dot blue"></span><div class="kp-text"><strong>Use area range on ABRs.</strong> Always summarize at ABR boundaries — fewer LSAs = smaller LSDBs, faster SPF, smaller routing tables across the domain.</div></div>
+    <div class="kp"><span class="kp-dot dark"></span><div class="kp-text"><strong>Enable MD5 authentication</strong> on every production OSPF interface to prevent unauthorized routers from injecting false routing information.</div></div>
+    <div class="kp"><span class="kp-dot green"></span><div class="kp-text"><strong>Use P2P network type on WAN.</strong> <code>ip ospf network point-to-point</code> eliminates DR/BDR election on serial/Ethernet P2P links and speeds up adjacency.</div></div>
+  </div>
+
+  <div class="note warn">
+    <span class="note-lbl">⚠️ Warning</span>
+    <strong>Never run</strong> <code>debug ip ospf</code> on a production router with many neighbors. It can spike CPU usage enough to cause OSPF flaps across the entire network. Always run <code>undebug all</code> immediately after any debug session.
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-brand">NETWORK <em>MAINTENANCE</em></div>
+  <span>Module 14 / 16 — OSPF Complete Reference · RFC 2328 · CATS Training</span>
+  <span>AD = 110 · Link-State IGP</span>
+</footer>
+
+<!-- ── BOTTOM NAV ── -->
+<div class="bottom-nav">
+  <a class="bnav-btn" href="module13_static-route.html">← Module 13: Static Route</a>
+  <a class="bnav-btn bnav-home" href="index.html">⌂ HOME</a>
+  <a class="bnav-btn bnav-next" href="module14_basic-bgp.html">Module 15: Basic BGP →</a>
+</div>
+
+</body>
+</html>
