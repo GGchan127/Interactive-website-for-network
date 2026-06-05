@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cisco Command Reference — Network Fundamentals</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1e2430;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #1f6feb;
+    --accent2: #388bfd;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --orange: #f0883e;
+    --red: #f85149;
+    --purple: #bc8cff;
+    --cyan: #39c5cf;
+    --tag-bg: #21262d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a2332 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 32px 20px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-icon {
+    width: 40px; height: 40px; background: var(--accent);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .brand-title { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+  .brand-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .stats { display: flex; gap: 16px; }
+  .stat { text-align: center; }
+  .stat-num { font-size: 20px; font-weight: 700; color: var(--accent2); }
+  .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── SEARCH & FILTER ── */
+  .controls {
+    margin-top: 16px;
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  }
+  .search-wrap { position: relative; flex: 1; min-width: 200px; }
+  .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+  #searchInput {
+    width: 100%; padding: 8px 12px 8px 34px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-size: 13px; outline: none;
+    transition: border-color 0.2s;
+  }
+  #searchInput:focus { border-color: var(--accent2); }
+  #searchInput::placeholder { color: var(--text-muted); }
+
+  .filter-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--tag-bg); color: var(--text-muted); font-size: 12px;
+    cursor: pointer; transition: all 0.15s; user-select: none; font-weight: 500;
+  }
+  .filter-btn:hover { border-color: var(--accent2); color: var(--text); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ── MAIN LAYOUT ── */
+  main { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+
+  .section-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--text-muted);
+    margin: 28px 0 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* ── COMMAND GRID ── */
+  .cmd-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 10px;
+  }
+
+  .cmd-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    transition: border-color 0.15s, transform 0.1s;
+    cursor: default;
+    position: relative;
+  }
+  .cmd-card:hover { border-color: var(--accent2); transform: translateY(-1px); }
+  .cmd-card.hidden { display: none; }
+
+  .cmd-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .cmd-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .tag {
+    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .tag-switch  { background: rgba(63,185,80,0.15);  color: var(--green);  border: 1px solid rgba(63,185,80,0.3); }
+  .tag-router  { background: rgba(31,111,235,0.15); color: var(--accent2); border: 1px solid rgba(56,139,253,0.3); }
+  .tag-bgp     { background: rgba(188,140,255,0.15);color: var(--purple); border: 1px solid rgba(188,140,255,0.3); }
+  .tag-mpls    { background: rgba(240,136,62,0.15); color: var(--orange); border: 1px solid rgba(240,136,62,0.3); }
+  .tag-vlan    { background: rgba(57,197,207,0.15); color: var(--cyan);   border: 1px solid rgba(57,197,207,0.3); }
+  .tag-show    { background: rgba(210,153,34,0.15); color: var(--yellow); border: 1px solid rgba(210,153,34,0.3); }
+  .tag-config  { background: rgba(248,81,73,0.15);  color: var(--red);    border: 1px solid rgba(248,81,73,0.3); }
+  .tag-ospf    { background: rgba(63,185,80,0.1);   color: #79c0ff;       border: 1px solid rgba(121,192,255,0.3); }
+
+  .copy-btn {
+    background: none; border: 1px solid transparent; color: var(--text-muted);
+    border-radius: 5px; padding: 3px 7px; font-size: 11px; cursor: pointer;
+    transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+  }
+  .copy-btn:hover { border-color: var(--border); color: var(--text); background: var(--surface2); }
+  .copy-btn.copied { color: var(--green); border-color: var(--green); }
+
+  .cmd-code {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 12.5px; color: var(--cyan);
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 5px; padding: 8px 12px;
+    white-space: pre-wrap; word-break: break-all;
+    margin-bottom: 8px; line-height: 1.6;
+  }
+  .cmd-code .kw  { color: #ff7b72; }
+  .cmd-code .val { color: #a5d6ff; }
+  .cmd-code .cmt { color: #8b949e; font-style: italic; }
+  .cmd-code .num { color: #79c0ff; }
+
+  .cmd-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+  .cmd-desc strong { color: var(--text); }
+  .cmd-module { font-size: 10px; color: #484f58; margin-top: 6px; }
+
+  /* ── MODE BADGE ── */
+  .mode-badge {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 1px 6px; border-radius: 4px; margin-bottom: 4px;
+    font-family: monospace;
+  }
+  .mode-priv   { background: rgba(248,81,73,0.12);  color: #f85149; }
+  .mode-global { background: rgba(63,185,80,0.12);  color: #3fb950; }
+  .mode-if     { background: rgba(57,197,207,0.12); color: #39c5cf; }
+  .mode-vlan   { background: rgba(188,140,255,0.12);color: #bc8cff; }
+  .mode-router { background: rgba(31,111,235,0.12); color: #388bfd; }
+
+  /* ── NO RESULTS ── */
+  #noResults {
+    display: none; text-align: center; padding: 60px 20px;
+    color: var(--text-muted); font-size: 15px;
+  }
+  #noResults span { font-size: 40px; display: block; margin-bottom: 12px; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center; padding: 24px;
+    color: #484f58; font-size: 11px; border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    header { padding: 16px; }
+    main { padding: 16px; }
+    .cmd-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="brand">
+      <div class="brand-icon">⌨</div>
+      <div>
+        <div class="brand-title">Cisco IOS Command Reference</div>
+        <div class="brand-sub">Network Fundamentals · Module 01–15 · Switch &amp; Router</div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-num" id="totalCount">0</div><div class="stat-label">Commands</div></div>
+      <div class="stat"><div class="stat-num" id="visibleCount">0</div><div class="stat-label">Shown</div></div>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.868-3.834zm-5.242 1.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
+      </svg>
+      <input id="searchInput" type="text" placeholder="Search command, description, or keyword…">
+    </div>
+    <div class="filter-btns">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="switch">Switch</button>
+      <button class="filter-btn" data-filter="router">Router</button>
+      <button class="filter-btn" data-filter="vlan">VLAN/Trunk</button>
+      <button class="filter-btn" data-filter="bgp">BGP</button>
+      <button class="filter-btn" data-filter="mpls">MPLS</button>
+      <button class="filter-btn" data-filter="show">Show/Verify</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="noResults"><span>🔍</span>No commands match your search.</div>
+  <div id="cmdContainer"></div>
+</main>
+
+<footer>CATS Training · Network Fundamentals · Module 01–15 · Cisco IOS Command Reference</footer>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const commands = [
+
+  // ═══════════════════════════════════════
+  // SWITCH — BASIC / GLOBAL
+  // ═══════════════════════════════════════
+  {
+    section: "Switch — Basic Configuration",
+    tags: ["switch", "config"],
+    mode: "global",
+    cmd: `Switch(config)# <span class="kw">hostname</span> <span class="val">SW1</span>`,
+    raw: "hostname SW1",
+    desc: "Set the switch hostname. Displayed in the CLI prompt.",
+    module: "Module 11 — How Switches Work"
+  },
+  {
+    section: "Switch — Basic Configuration",
+    tags: ["switch", "config"],
+    mode: "global",
+    cmd: `Switch(config)# <span class="kw">enable secret</span> <span class="val">cisco123</span>`,
+    raw: "enable secret cisco123",
+    desc: "Set encrypted enable (privileged EXEC) password.",
+    module: "Module 11"
+  },
+  {
+    section: "Switch — Basic Configuration",
+    tags: ["switch", "config"],
+    mode: "global",
+    cmd: `Switch(config)# <span class="kw">no ip domain-lookup</span>`,
+    raw: "no ip domain-lookup",
+    desc: "Disable DNS lookup — prevents CLI delays when mistyping commands.",
+    module: "Module 11"
+  },
+  {
+    section: "Switch — Basic Configuration",
+    tags: ["switch", "config"],
+    mode: "global",
+    cmd: `Switch(config)# <span class="kw">service password-encryption</span>`,
+    raw: "service password-encryption",
+    desc: "Encrypt all plaintext passwords stored in the running config.",
+    module: "Module 11"
+  },
+  {
+    section: "Switch — Basic Configuration",
+    tags: ["switch", "config"],
+    mode: "if",
+    cmd: `Switch(config-if)# <span class="kw">description</span> <span class="val">Uplink to Router</span>`,
+    raw: "description Uplink to Router",
+    desc: "Add a text description to an interface — useful for documentation.",
+    module: "Module 11"
+  },
+  {
+    section: "Switch — Basic Configuration",
+    tags: ["switch", "config"],
+    mode: "if",
+    cmd: `Switch(config-if)# <span class="kw">no shutdown</span>`,
+    raw: "no shutdown",
+    desc: "Enable (bring up) a shutdown interface. Default state on most switch ports is up.",
+    module: "Module 11"
+  },
+  {
+    section: "Switch — Basic Configuration",
+    tags: ["switch", "config"],
+    mode: "if",
+    cmd: `Switch(config-if)# <span class="kw">shutdown</span>`,
+    raw: "shutdown",
+    desc: "Administratively disable an interface.",
+    module: "Module 11"
+  },
+  {
+    section: "Switch — Basic Configuration",
+    tags: ["switch", "config"],
+    mode: "if",
+    cmd: `Switch(config-if)# <span class="kw">duplex</span> <span class="val">full</span>
+Switch(config-if)# <span class="kw">speed</span> <span class="val">100</span>`,
+    raw: "duplex full\nspeed 100",
+    desc: "Force full-duplex and 100 Mbps speed. Omit both to use auto-negotiation (recommended).",
+    module: "Module 11"
+  },
+
+  // ═══════════════════════════════════════
+  // SWITCH — MAC ADDRESS TABLE
+  // ═══════════════════════════════════════
+  {
+    section: "Switch — MAC Address Table",
+    tags: ["switch", "show"],
+    mode: "priv",
+    cmd: `Switch# <span class="kw">show mac address-table</span>`,
+    raw: "show mac address-table",
+    desc: "Display the full MAC address table (CAM table). Shows VLAN, MAC, Type, and Port.",
+    module: "Module 11 — How Switches Work"
+  },
+  {
+    section: "Switch — MAC Address Table",
+    tags: ["switch", "show"],
+    mode: "priv",
+    cmd: `Switch# <span class="kw">show mac address-table dynamic</span>`,
+    raw: "show mac address-table dynamic",
+    desc: "Show only dynamically learned MAC entries.",
+    module: "Module 11"
+  },
+  {
+    section: "Switch — MAC Address Table",
+    tags: ["switch", "config"],
+    mode: "priv",
+    cmd: `Switch# <span class="kw">clear mac address-table dynamic</span>`,
+    raw: "clear mac address-table dynamic",
+    desc: "Flush all dynamic MAC entries — switch relearns from next incoming frames.",
+    module: "Module 11"
+  },
+
+  // ═══════════════════════════════════════
+  // VLAN CONFIGURATION
+  // ═══════════════════════════════════════
+  {
+    section: "VLAN — Create & Name",
+    tags: ["switch", "vlan", "config"],
+    mode: "global",
+    cmd: `Switch(config)# <span class="kw">vlan</span> <span class="num">10</span>
+Switch(config-vlan)# <span class="kw">name</span> <span class="val">SALES</span>`,
+    raw: "vlan 10\nname SALES",
+    desc: "Create VLAN 10 and name it SALES. Repeat for each VLAN needed. Normal range: 2–1001.",
+    module: "Module 12 — VLANs &amp; Trunk"
+  },
+  {
+    section: "VLAN — Create & Name",
+    tags: ["switch", "vlan", "config"],
+    mode: "global",
+    cmd: `Switch(config)# <span class="kw">no vlan</span> <span class="num">10</span>`,
+    raw: "no vlan 10",
+    desc: "Delete VLAN 10 from the switch. Cannot delete VLAN 1 or 1002–1005.",
+    module: "Module 12"
+  },
+  {
+    section: "VLAN — Access Port",
+    tags: ["switch", "vlan", "config"],
+    mode: "if",
+    cmd: `Switch(config-if)# <span class="kw">switchport mode access</span>
+Switch(config-if)# <span class="kw">switchport access vlan</span> <span class="num">10</span>`,
+    raw: "switchport mode access\nswitchport access vlan 10",
+    desc: "Set port as an access port and assign it to VLAN 10. Use for end-device connections (PC, printer, IP phone).",
+    module: "Module 12 — VLANs &amp; Trunk"
+  },
+  {
+    section: "VLAN — Access Port",
+    tags: ["switch", "vlan", "config"],
+    mode: "if",
+    cmd: `Switch(config-if)# <span class="kw">switchport voice vlan</span> <span class="num">20</span>`,
+    raw: "switchport voice vlan 20",
+    desc: "Assign a voice VLAN to a port. Used when an IP phone and PC share one switch port.",
+    module: "Module 12"
+  },
+  {
+    section: "VLAN — Trunk Port",
+    tags: ["switch", "vlan", "config"],
+    mode: "if",
+    cmd: `Switch(config-if)# <span class="kw">switchport trunk encapsulation dot1q</span>
+Switch(config-if)# <span class="kw">switchport mode trunk</span>`,
+    raw: "switchport trunk encapsulation dot1q\nswitchport mode trunk",
+    desc: "Configure a trunk port using 802.1Q encapsulation. Carries all VLANs by default. Required on Switch-to-Switch and Switch-to-Router links.",
+    module: "Module 12 — VLANs &amp; Trunk"
+  },
+  {
+    section: "VLAN — Trunk Port",
+    tags: ["switch", "vlan", "config"],
+    mode: "if",
+    cmd: `Switch(config-if)# <span class="kw">switchport trunk allowed vlan</span> <span class="num">10,20,30</span>`,
+    raw: "switchport trunk allowed vlan 10,20,30",
+    desc: "Restrict the trunk to carry only VLANs 10, 20, and 30.",
+    module: "Module 12"
+  },
+  {
+    section: "VLAN — Trunk Port",
+    tags: ["switch", "vlan", "config"],
+    mode: "if",
+    cmd: `Switch(config-if)# <span class="kw">switchport trunk native vlan</span> <span class="num">99</span>`,
+    raw: "switchport trunk native vlan 99",
+    desc: "Change the native VLAN from default (VLAN 1) to VLAN 99. Native VLAN frames are sent untagged.",
+    module: "Module 12"
+  },
+  {
+    section: "VLAN — Verify",
+    tags: ["switch", "vlan", "show"],
+    mode: "priv",
+    cmd: `Switch# <span class="kw">show vlan brief</span>`,
+    raw: "show vlan brief",
+    desc: "Summary of all VLANs: VLAN ID, Name, Status, and assigned Ports.",
+    module: "Module 12 — VLANs &amp; Trunk"
+  },
+  {
+    section: "VLAN — Verify",
+    tags: ["switch", "vlan", "show"],
+    mode: "priv",
+    cmd: `Switch# <span class="kw">show interfaces trunk</span>`,
+    raw: "show interfaces trunk",
+    desc: "Show all trunk ports, encapsulation type, native VLAN, and allowed VLANs.",
+    module: "Module 12"
+  },
+  {
+    section: "VLAN — Verify",
+    tags: ["switch", "vlan", "show"],
+    mode: "priv",
+    cmd: `Switch# <span class="kw">show interfaces</span> <span class="val">GigabitEthernet0/1</span> <span class="kw">switchport</span>`,
+    raw: "show interfaces GigabitEthernet0/1 switchport",
+    desc: "Detailed Layer 2 info for a single interface: mode, access VLAN, trunk allowed VLANs.",
+    module: "Module 12"
+  },
+
+  // ═══════════════════════════════════════
+  // ROUTER — BASIC CONFIGURATION
+  // ═══════════════════════════════════════
+  {
+    section: "Router — Basic Configuration",
+    tags: ["router", "config"],
+    mode: "global",
+    cmd: `Router(config)# <span class="kw">hostname</span> <span class="val">R1</span>`,
+    raw: "hostname R1",
+    desc: "Set the router hostname.",
+    module: "Module 10 — How Routers Work"
+  },
+  {
+    section: "Router — Basic Configuration",
+    tags: ["router", "config"],
+    mode: "if",
+    cmd: `Router(config-if)# <span class="kw">ip address</span> <span class="val">192.168.1.1</span> <span class="val">255.255.255.0</span>
+Router(config-if)# <span class="kw">no shutdown</span>`,
+    raw: "ip address 192.168.1.1 255.255.255.0\nno shutdown",
+    desc: "Assign IP address and subnet mask to an interface, then bring it up. A connected route is automatically added to the routing table.",
+    module: "Module 10 — How Routers Work"
+  },
+  {
+    section: "Router — Basic Configuration",
+    tags: ["router", "config"],
+    mode: "if",
+    cmd: `Router(config-if)# <span class="kw">ip address</span> <span class="val">10.0.0.1</span> <span class="val">255.255.255.252</span>
+<span class="cmt">! /30 = 2 usable hosts — used for point-to-point links</span>`,
+    raw: "ip address 10.0.0.1 255.255.255.252",
+    desc: "/30 subnet mask for point-to-point router links (only 2 usable hosts).",
+    module: "Module 6 — IP Calculation"
+  },
+  {
+    section: "Router — Basic Configuration",
+    tags: ["router", "config"],
+    mode: "if",
+    cmd: `Router(config-if)# <span class="kw">description</span> <span class="val">Link to SW-Core</span>`,
+    raw: "description Link to SW-Core",
+    desc: "Add description to a router interface for documentation.",
+    module: "Module 10"
+  },
+  {
+    section: "Router — Basic Configuration",
+    tags: ["router", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show interfaces</span> <span class="val">GigabitEthernet0/0</span>`,
+    raw: "show interfaces GigabitEthernet0/0",
+    desc: "Detailed interface status: line protocol, IP, duplex, speed, errors, input/output stats.",
+    module: "Module 10"
+  },
+  {
+    section: "Router — Basic Configuration",
+    tags: ["router", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show ip interface brief</span>`,
+    raw: "show ip interface brief",
+    desc: "Quick overview of ALL interfaces: IP address, OK?, Method, Status, Protocol.",
+    module: "Module 10 — How Routers Work"
+  },
+
+  // ═══════════════════════════════════════
+  // ROUTING TABLE & STATIC ROUTES
+  // ═══════════════════════════════════════
+  {
+    section: "Routing — Show Routing Table",
+    tags: ["router", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show ip route</span>`,
+    raw: "show ip route",
+    desc: "Display the full IP routing table. Codes: C=Connected, S=Static, O=OSPF, R=RIP, B=BGP, * = default route candidate.",
+    module: "Module 10 / 13 — Router &amp; Static Route"
+  },
+  {
+    section: "Routing — Show Routing Table",
+    tags: ["router", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show ip route static</span>`,
+    raw: "show ip route static",
+    desc: "Show only static routes (code S) in the routing table.",
+    module: "Module 13"
+  },
+  {
+    section: "Routing — Show Routing Table",
+    tags: ["router", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show ip route connected</span>`,
+    raw: "show ip route connected",
+    desc: "Show only connected routes (code C and L) — interfaces that are up with an IP.",
+    module: "Module 13"
+  },
+  {
+    section: "Routing — Static Route",
+    tags: ["router", "config"],
+    mode: "global",
+    cmd: `Router(config)# <span class="kw">ip route</span> <span class="val">192.168.2.0</span> <span class="val">255.255.255.0</span> <span class="val">10.0.0.2</span>
+<span class="cmt">! Syntax: ip route [dest_network] [mask] [next_hop_IP]</span>`,
+    raw: "ip route 192.168.2.0 255.255.255.0 10.0.0.2",
+    desc: "Add a static route to 192.168.2.0/24 via next-hop 10.0.0.2.",
+    module: "Module 13 — Static Routing"
+  },
+  {
+    section: "Routing — Static Route",
+    tags: ["router", "config"],
+    mode: "global",
+    cmd: `Router(config)# <span class="kw">ip route</span> <span class="val">192.168.2.0</span> <span class="val">255.255.255.0</span> <span class="val">GigabitEthernet0/1</span>
+<span class="cmt">! Syntax: ip route [dest_network] [mask] [exit_interface]</span>`,
+    raw: "ip route 192.168.2.0 255.255.255.0 GigabitEthernet0/1",
+    desc: "Static route using exit interface instead of next-hop IP. Common on serial/point-to-point links.",
+    module: "Module 13"
+  },
+  {
+    section: "Routing — Default Route",
+    tags: ["router", "config"],
+    mode: "global",
+    cmd: `Router(config)# <span class="kw">ip route</span> <span class="val">0.0.0.0</span> <span class="val">0.0.0.0</span> <span class="val">203.0.113.1</span>
+<span class="cmt">! Gateway of last resort — matches ANY destination</span>`,
+    raw: "ip route 0.0.0.0 0.0.0.0 203.0.113.1",
+    desc: "Configure a default route (quad-zero route). Used when no more-specific route matches — typically points to the ISP gateway.",
+    module: "Module 13 — Static Routing"
+  },
+  {
+    section: "Routing — Default Route",
+    tags: ["router", "config"],
+    mode: "global",
+    cmd: `Router(config)# <span class="kw">no ip route</span> <span class="val">192.168.2.0</span> <span class="val">255.255.255.0</span> <span class="val">10.0.0.2</span>`,
+    raw: "no ip route 192.168.2.0 255.255.255.0 10.0.0.2",
+    desc: "Remove a static route. Must specify exact parameters matching the original command.",
+    module: "Module 13"
+  },
+
+  // ═══════════════════════════════════════
+  // ARP
+  // ═══════════════════════════════════════
+  {
+    section: "ARP — Address Resolution",
+    tags: ["router", "switch", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show arp</span>`,
+    raw: "show arp",
+    desc: "Display the ARP cache: IP address, Age, MAC address, Type, Interface.",
+    module: "Module 08 — ARP Protocol"
+  },
+  {
+    section: "ARP — Address Resolution",
+    tags: ["router", "switch", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show ip arp</span>`,
+    raw: "show ip arp",
+    desc: "Same as 'show arp' — shows the IP ARP table on Cisco IOS.",
+    module: "Module 08"
+  },
+  {
+    section: "ARP — Address Resolution",
+    tags: ["router", "config"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">clear arp-cache</span>`,
+    raw: "clear arp-cache",
+    desc: "Flush the ARP cache — all entries are deleted and relearned on next communication.",
+    module: "Module 08"
+  },
+
+  // ═══════════════════════════════════════
+  // ICMP / CONNECTIVITY TESTING
+  // ═══════════════════════════════════════
+  {
+    section: "ICMP — Connectivity Testing",
+    tags: ["router", "switch", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">ping</span> <span class="val">192.168.1.1</span>`,
+    raw: "ping 192.168.1.1",
+    desc: "Send 5 ICMP Echo Requests to test reachability. Output: !!!!! = all replied, ..... = no reply, U = destination unreachable.",
+    module: "Module 07 — ICMP"
+  },
+  {
+    section: "ICMP — Connectivity Testing",
+    tags: ["router", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">ping</span> <span class="val">192.168.1.1</span> <span class="kw">repeat</span> <span class="num">100</span> <span class="kw">size</span> <span class="num">1500</span>`,
+    raw: "ping 192.168.1.1 repeat 100 size 1500",
+    desc: "Extended ping: send 100 packets of 1500 bytes to test large-frame reachability (MTU test).",
+    module: "Module 07"
+  },
+  {
+    section: "ICMP — Connectivity Testing",
+    tags: ["router", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">traceroute</span> <span class="val">8.8.8.8</span>`,
+    raw: "traceroute 8.8.8.8",
+    desc: "Trace the route to a destination hop by hop using ICMP TTL exceeded messages.",
+    module: "Module 07 — ICMP"
+  },
+
+  // ═══════════════════════════════════════
+  // BGP CONFIGURATION
+  // ═══════════════════════════════════════
+  {
+    section: "BGP — Basic Setup",
+    tags: ["router", "bgp", "config"],
+    mode: "router",
+    cmd: `Router(config)# <span class="kw">router bgp</span> <span class="num">100</span>`,
+    raw: "router bgp 100",
+    desc: "Enter BGP routing process for AS 100. AS numbers: Public 1–64511, Private 64512–65535.",
+    module: "Module 14 — Basic BGP"
+  },
+  {
+    section: "BGP — Basic Setup",
+    tags: ["router", "bgp", "config"],
+    mode: "router",
+    cmd: `Router(config-router)# <span class="kw">neighbor</span> <span class="val">203.0.113.2</span> <span class="kw">remote-as</span> <span class="num">200</span>
+<span class="cmt">! eBGP peer in a different AS (AS 200)</span>`,
+    raw: "neighbor 203.0.113.2 remote-as 200",
+    desc: "Define an eBGP neighbor at 203.0.113.2 in AS 200. BGP uses TCP port 179 for the session.",
+    module: "Module 14 — Basic BGP"
+  },
+  {
+    section: "BGP — Basic Setup",
+    tags: ["router", "bgp", "config"],
+    mode: "router",
+    cmd: `Router(config-router)# <span class="kw">neighbor</span> <span class="val">10.0.0.2</span> <span class="kw">remote-as</span> <span class="num">100</span>
+<span class="cmt">! iBGP peer — same AS number (100)</span>`,
+    raw: "neighbor 10.0.0.2 remote-as 100",
+    desc: "Define an iBGP neighbor in the same AS. iBGP requires full-mesh or Route Reflector.",
+    module: "Module 14"
+  },
+  {
+    section: "BGP — Advertise Networks",
+    tags: ["router", "bgp", "config"],
+    mode: "router",
+    cmd: `Router(config-router)# <span class="kw">network</span> <span class="val">10.0.0.0</span> <span class="kw">mask</span> <span class="val">255.255.255.0</span>
+Router(config-router)# <span class="kw">no auto-summary</span>`,
+    raw: "network 10.0.0.0 mask 255.255.255.0\nno auto-summary",
+    desc: "Advertise network 10.0.0.0/24 into BGP. 'no auto-summary' prevents classful summarization.",
+    module: "Module 14 — Basic BGP"
+  },
+  {
+    section: "BGP — Path Attributes",
+    tags: ["router", "bgp", "config"],
+    mode: "router",
+    cmd: `Router(config-router)# <span class="kw">neighbor</span> <span class="val">203.0.113.2</span> <span class="kw">weight</span> <span class="num">200</span>
+<span class="cmt">! Weight: Cisco-specific, higher = preferred, local to router only</span>`,
+    raw: "neighbor 203.0.113.2 weight 200",
+    desc: "Set Weight for routes from neighbor. Highest Weight wins (Cisco-only, not advertised).",
+    module: "Module 14"
+  },
+  {
+    section: "BGP — Path Attributes",
+    tags: ["router", "bgp", "config"],
+    mode: "router",
+    cmd: `Router(config-router)# <span class="kw">neighbor</span> <span class="val">10.0.0.2</span> <span class="kw">next-hop-self</span>
+<span class="cmt">! Required for iBGP — sets this router as next-hop</span>`,
+    raw: "neighbor 10.0.0.2 next-hop-self",
+    desc: "Force this router to set itself as the next-hop for iBGP updates. Required when iBGP peers can't reach eBGP next-hops.",
+    module: "Module 14"
+  },
+  {
+    section: "BGP — Verify",
+    tags: ["router", "bgp", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show bgp summary</span>`,
+    raw: "show bgp summary",
+    desc: "BGP neighbor table: AS, MsgRcvd, MsgSent, Up/Down time, State. 'Established' = session is up.",
+    module: "Module 14 — Basic BGP"
+  },
+  {
+    section: "BGP — Verify",
+    tags: ["router", "bgp", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show ip bgp</span>`,
+    raw: "show ip bgp",
+    desc: "Full BGP routing table: prefixes, next-hop, weight, local pref, AS-path, origin. &gt; = best path.",
+    module: "Module 14"
+  },
+  {
+    section: "BGP — Verify",
+    tags: ["router", "bgp", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show ip bgp neighbors</span>`,
+    raw: "show ip bgp neighbors",
+    desc: "Detailed BGP session info: state, TCP session, capabilities, messages, timers.",
+    module: "Module 14"
+  },
+  {
+    section: "BGP — Verify",
+    tags: ["router", "bgp", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show ip bgp</span> <span class="val">192.168.1.0</span>`,
+    raw: "show ip bgp 192.168.1.0",
+    desc: "Show BGP entry for a specific prefix — all paths and attributes.",
+    module: "Module 14"
+  },
+
+  // ═══════════════════════════════════════
+  // MPLS
+  // ═══════════════════════════════════════
+  {
+    section: "MPLS — Enable & LDP",
+    tags: ["router", "mpls", "config"],
+    mode: "global",
+    cmd: `Router(config)# <span class="kw">mpls ip</span>
+<span class="cmt">! Enable MPLS forwarding globally</span>`,
+    raw: "mpls ip",
+    desc: "Enable MPLS IP forwarding globally. Must also enable on each interface.",
+    module: "Module 15 — Basic MPLS"
+  },
+  {
+    section: "MPLS — Enable & LDP",
+    tags: ["router", "mpls", "config"],
+    mode: "if",
+    cmd: `Router(config-if)# <span class="kw">mpls ip</span>
+<span class="cmt">! Enable MPLS on this interface — LDP starts on the link</span>`,
+    raw: "mpls ip",
+    desc: "Enable MPLS on a specific interface. LDP (Label Distribution Protocol) peers form on this link.",
+    module: "Module 15 — Basic MPLS"
+  },
+  {
+    section: "MPLS — Enable & LDP",
+    tags: ["router", "mpls", "config"],
+    mode: "global",
+    cmd: `Router(config)# <span class="kw">mpls ldp router-id</span> <span class="val">Loopback0</span> <span class="kw">force</span>`,
+    raw: "mpls ldp router-id Loopback0 force",
+    desc: "Set the LDP Router-ID to the Loopback0 address. Ensures a stable, consistent LDP identifier.",
+    module: "Module 15"
+  },
+  {
+    section: "MPLS — Verify",
+    tags: ["router", "mpls", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show mpls interfaces</span>`,
+    raw: "show mpls interfaces",
+    desc: "List all MPLS-enabled interfaces and their LDP status.",
+    module: "Module 15 — Basic MPLS"
+  },
+  {
+    section: "MPLS — Verify",
+    tags: ["router", "mpls", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show mpls ldp neighbor</span>`,
+    raw: "show mpls ldp neighbor",
+    desc: "Show all LDP neighbors: peer LDP ID, state, transport address, interface.",
+    module: "Module 15"
+  },
+  {
+    section: "MPLS — Verify",
+    tags: ["router", "mpls", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show mpls ldp bindings</span>`,
+    raw: "show mpls ldp bindings",
+    desc: "Show the LIB (Label Information Base): prefix, local label, and remote bindings from neighbors.",
+    module: "Module 15"
+  },
+  {
+    section: "MPLS — Verify",
+    tags: ["router", "mpls", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show mpls forwarding-table</span>`,
+    raw: "show mpls forwarding-table",
+    desc: "Show the LFIB (Label Forwarding Information Base): incoming label, outgoing label, interface. This is what LSRs use to swap labels.",
+    module: "Module 15 — Basic MPLS"
+  },
+  {
+    section: "MPLS — Verify",
+    tags: ["router", "mpls", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show ip cef</span>`,
+    raw: "show ip cef",
+    desc: "Show Cisco Express Forwarding table — the FIB used for IP lookup before MPLS label imposition.",
+    module: "Module 15"
+  },
+
+  // ═══════════════════════════════════════
+  // GENERAL VERIFICATION
+  // ═══════════════════════════════════════
+  {
+    section: "General — Verification & Troubleshooting",
+    tags: ["router", "switch", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show running-config</span>`,
+    raw: "show running-config",
+    desc: "Display the current active configuration in RAM. Use to verify all settings.",
+    module: "All Modules"
+  },
+  {
+    section: "General — Verification & Troubleshooting",
+    tags: ["router", "switch", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show startup-config</span>`,
+    raw: "show startup-config",
+    desc: "Display the saved configuration in NVRAM. This is loaded on boot.",
+    module: "All Modules"
+  },
+  {
+    section: "General — Verification & Troubleshooting",
+    tags: ["router", "switch", "config"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">copy running-config startup-config</span>
+<span class="cmt">! or: write memory (wr)</span>`,
+    raw: "copy running-config startup-config",
+    desc: "Save the running config to NVRAM so it persists after reboot.",
+    module: "All Modules"
+  },
+  {
+    section: "General — Verification & Troubleshooting",
+    tags: ["router", "switch", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">show version</span>`,
+    raw: "show version",
+    desc: "IOS version, hardware model, memory, uptime, and boot configuration register.",
+    module: "All Modules"
+  },
+  {
+    section: "General — Verification & Troubleshooting",
+    tags: ["router", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">debug ip routing</span>
+<span class="cmt">! Turn off with: undebug all</span>`,
+    raw: "debug ip routing",
+    desc: "Real-time debug of routing table changes. Use carefully in production — generates heavy output.",
+    module: "Module 13"
+  },
+  {
+    section: "General — Verification & Troubleshooting",
+    tags: ["router", "show"],
+    mode: "priv",
+    cmd: `Router# <span class="kw">undebug all</span>`,
+    raw: "undebug all",
+    desc: "Turn off ALL active debug sessions immediately.",
+    module: "All Modules"
+  },
+
+];
+
+// ── MODE LABEL MAP ────────────────────────────────────────────────────────────
+const modeLabel = {
+  priv:   { cls: "mode-priv",   text: "Privileged EXEC  #" },
+  global: { cls: "mode-global", text: "Global Config  (config)#" },
+  if:     { cls: "mode-if",     text: "Interface Config  (config-if)#" },
+  vlan:   { cls: "mode-vlan",   text: "VLAN Config  (config-vlan)#" },
+  router: { cls: "mode-router", text: "Router Config  (config-router)#" },
+};
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function buildTagHTML(tags) {
+  return tags.map(t => {
+    const cls = {
+      switch:"tag-switch", router:"tag-router", bgp:"tag-bgp",
+      mpls:"tag-mpls", vlan:"tag-vlan", show:"tag-show",
+      config:"tag-config", ospf:"tag-ospf"
+    }[t] || "tag-show";
+    return `<span class="tag ${cls}">${t}</span>`;
+  }).join('');
+}
+
+function render(list) {
+  const container = document.getElementById('cmdContainer');
+  container.innerHTML = '';
+
+  // Group by section
+  const sections = {};
+  list.forEach(c => {
+    if (!sections[c.section]) sections[c.section] = [];
+    sections[c.section].push(c);
+  });
+
+  if (list.length === 0) {
+    document.getElementById('noResults').style.display = 'block';
+    document.getElementById('visibleCount').textContent = 0;
+    return;
+  }
+  document.getElementById('noResults').style.display = 'none';
+  document.getElementById('visibleCount').textContent = list.length;
+
+  Object.entries(sections).forEach(([sec, cmds]) => {
+    const title = document.createElement('div');
+    title.className = 'section-title';
+    title.textContent = sec;
+    container.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.className = 'cmd-grid';
+
+    cmds.forEach((c, i) => {
+      const m = modeLabel[c.mode] || modeLabel.priv;
+      const card = document.createElement('div');
+      card.className = 'cmd-card';
+      card.innerHTML = `
+        <div class="cmd-header">
+          <div class="cmd-tags">${buildTagHTML(c.tags)}</div>
+          <button class="copy-btn" onclick="copyCmd(this, \`${c.raw.replace(/`/g,'\\`')}\`)">Copy</button>
+        </div>
+        <span class="mode-badge ${m.cls}">${m.text}</span>
+        <div class="cmd-code">${c.cmd}</div>
+        <div class="cmd-desc">${c.desc}</div>
+        <div class="cmd-module">📘 ${c.module}</div>
+      `;
+      grid.appendChild(card);
+    });
+    container.appendChild(grid);
+  });
+}
+
+// ── COPY ──────────────────────────────────────────────────────────────────────
+function copyCmd(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+
+// ── FILTER & SEARCH ───────────────────────────────────────────────────────────
+let activeFilter = 'all';
+
+function applyFilters() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  return commands.filter(c => {
+    const matchFilter = activeFilter === 'all' || c.tags.includes(activeFilter);
+    const matchSearch = !q ||
+      c.raw.toLowerCase().includes(q) ||
+      c.desc.toLowerCase().includes(q) ||
+      c.section.toLowerCase().includes(q) ||
+      c.module.toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+}
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    render(applyFilters());
+  });
+});
+
+document.getElementById('searchInput').addEventListener('input', () => render(applyFilters()));
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.getElementById('totalCount').textContent = commands.length;
+render(commands);
+</script>
+</body>
+</html>
